@@ -310,7 +310,8 @@ static void __init size_pmem_devices(void)
 	android_pmem_adsp_pdata.size = pmem_adsp_size;
 
 	if (!pmem_param_set) {
-		if (machine_is_msm8960_liquid())
+		if (machine_is_msm8960_liquid() ||
+			machine_is_apq8060a_dragon())
 			pmem_size = MSM_LIQUID_PMEM_SIZE;
 		if (msm8960_hdmi_as_primary_selected())
 			pmem_size = MSM_HDMI_PRIM_PMEM_SIZE;
@@ -481,13 +482,15 @@ static void __init adjust_mem_for_liquid(void)
 	unsigned int i;
 
 	if (!pmem_param_set) {
-		if (machine_is_msm8960_liquid())
+		if (machine_is_msm8960_liquid() ||
+			machine_is_apq8060a_dragon())
 			msm_ion_sf_size = MSM_LIQUID_ION_SF_SIZE;
 
 		if (msm8960_hdmi_as_primary_selected())
 			msm_ion_sf_size = MSM_HDMI_PRIM_ION_SF_SIZE;
 
 		if (machine_is_msm8960_liquid() ||
+			machine_is_apq8060a_dragon() ||
 			msm8960_hdmi_as_primary_selected()) {
 			for (i = 0; i < msm8960_ion_pdata.nr; i++) {
 				if (msm8960_ion_pdata.heaps[i].id ==
@@ -2860,7 +2863,8 @@ static void __init msm8960_init_smsc_hub(void)
 	if (SOCINFO_VERSION_MAJOR(version) == 1)
 		return;
 
-	if (machine_is_msm8960_liquid())
+	if (machine_is_msm8960_liquid() ||
+		machine_is_apq8060a_dragon())
 		platform_device_register(&smsc_hub_device);
 }
 
@@ -2872,7 +2876,8 @@ static void __init msm8960_init_hsic(void)
 	if (SOCINFO_VERSION_MAJOR(version) == 1)
 		return;
 
-	if (machine_is_msm8960_liquid())
+	if (machine_is_msm8960_liquid() ||
+			machine_is_apq8060a_dragon())
 		platform_device_register(&msm_device_hsic_host);
 #endif
 }
@@ -3094,7 +3099,8 @@ static void __init msm8960_cdp_init(void)
 	if (machine_is_msm8960_mtp() || machine_is_msm8960_fluid() ||
 		machine_is_msm8960_cdp()) {
 		msm_otg_pdata.phy_init_seq = wr_phy_init_seq;
-	} else if (machine_is_msm8960_liquid()) {
+	} else if (machine_is_msm8960_liquid() ||
+			machine_is_apq8060a_dragon()) {
 			msm_otg_pdata.phy_init_seq =
 				liquid_v1_phy_init_seq;
 	}
@@ -3102,7 +3108,8 @@ static void __init msm8960_cdp_init(void)
 		msm_rpmrs_levels[0].latency_us;
 	msm_device_hsic_host.dev.platform_data = &msm_hsic_pdata;
 	if (SOCINFO_VERSION_MAJOR(socinfo_get_version()) >= 2 &&
-					machine_is_msm8960_liquid())
+					(machine_is_msm8960_liquid() ||
+					machine_is_apq8060a_dragon()))
 		msm_device_hsic_host.dev.parent = &smsc_hub_device.dev;
 	msm8960_init_gpiomux();
 	msm8960_device_qup_spi_gsbi1.dev.platform_data =

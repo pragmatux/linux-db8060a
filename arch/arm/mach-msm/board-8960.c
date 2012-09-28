@@ -3229,3 +3229,14 @@ MACHINE_START(MSM8960_LIQUID, "QCT MSM8960 LIQUID")
 	.init_early = msm8960_allocate_memory_regions,
 	.init_very_early = msm8960_early_memory,
 MACHINE_END
+
+MACHINE_START(APQ8060A_DRAGON, "APQ8060A Dragonboard")
+	.map_io = msm8960_map_io,
+	.reserve = msm8960_reserve,
+	.init_irq = msm8960_init_irq,
+	.handle_irq = gic_handle_irq,
+	.timer = &msm_timer,
+	.init_machine = msm8960_cdp_init,
+	.init_early = msm8960_allocate_memory_regions,
+	.init_very_early = msm8960_early_memory,
+MACHINE_END

@@ -957,12 +957,13 @@ int __init msm8960_init_gpiomux(void)
 
 #ifdef CONFIG_USB_EHCI_MSM_HSIC
 	if ((SOCINFO_VERSION_MAJOR(socinfo_get_version()) != 1) &&
-		machine_is_msm8960_liquid())
+		(machine_is_msm8960_liquid() || machine_is_apq8060a_dragon()))
 		msm_gpiomux_install(msm8960_hsic_configs,
 			ARRAY_SIZE(msm8960_hsic_configs));
 
 	if ((SOCINFO_VERSION_MAJOR(socinfo_get_version()) != 1) &&
-			machine_is_msm8960_liquid())
+			(machine_is_msm8960_liquid() ||
+					machine_is_apq8060a_dragon()))
 		msm_gpiomux_install(msm8960_hsic_hub_configs,
 			ARRAY_SIZE(msm8960_hsic_hub_configs));
 #endif

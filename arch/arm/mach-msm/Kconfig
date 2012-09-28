@@ -770,6 +770,12 @@ config MACH_MSM8960_LIQUID
 	help
 	  Support for the Qualcomm MSM8960 LIQUID device.
 
+config MACH_APQ8060A_DRAGON
+	depends on ARCH_MSM8960
+	bool "APQ8060A Based Dragonboard"
+	help
+	  Support for the Qualcomm APQ8060A/MSM8960 based device
+
 config MACH_MSM8930_CDP
 	depends on ARCH_MSM8930
 	bool "MSM8930 CDP"

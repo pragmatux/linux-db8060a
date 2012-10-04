@@ -104,6 +104,10 @@
 #include "pm-boot.h"
 #include "msm_watchdog.h"
 
+#ifdef CONFIG_TOUCHSCREEN_SITRONIX_I2C_TOUCH
+#include <../../../drivers/input/touchscreen/sitronix_i2c_touch.h>
+#endif
+
 static struct platform_device msm_fm_platform_init = {
 	.name = "iris_fm",
 	.id   = -1,
@@ -1949,6 +1953,60 @@ static struct i2c_board_info cyttsp_info[] __initdata = {
 	},
 };
 
+#ifdef CONFIG_TOUCHSCREEN_SITRONIX_I2C_TOUCH
+
+#define SITRONIX_TS_INT_GPIO   46
+#define SITRONIX_TS_RESET_GPIO 52
+
+
+
+static int sitronix_config_gpio(void)
+{
+	int rc = 0;
+	rc = gpio_request(SITRONIX_TS_INT_GPIO, "sitronix_ts_int");
+	if (rc) {
+		pr_err("%s: gpio_request(%d) failed\n", __func__,
+		SITRONIX_TS_INT_GPIO);
+		return rc;
+	}
+
+	rc = gpio_direction_input(SITRONIX_TS_INT_GPIO);
+	if (rc) {
+		pr_err("%s: gpio_direction_input(%d) failed\n", __func__,
+		SITRONIX_TS_INT_GPIO);
+		return rc;
+	}
+
+	rc = gpio_request(SITRONIX_TS_RESET_GPIO, "sitronix_ts_reset");
+	if (rc) {
+		pr_err("%s: gpio_request(%d) failed\n", __func__,
+		SITRONIX_TS_RESET_GPIO);
+		return rc;
+	}
+
+	rc = gpio_direction_output(SITRONIX_TS_RESET_GPIO, 1);
+	if (rc) {
+		pr_err("%s: gpio_direction_input(%d) failed\n", __func__,
+		SITRONIX_TS_RESET_GPIO);
+		return rc;
+	}
+
+	return rc;
+}
+
+struct sitronix_i2c_touch_platform_data touch_i2c_conf = {
+	/* For future use */
+};
+
+
+static struct i2c_board_info sitronix_info[] __initdata = {
+	{
+		I2C_BOARD_INFO(SITRONIX_I2C_TOUCH_DRV_NAME, 0x55),
+		.irq		   = MSM_GPIO_TO_INT(SITRONIX_TS_INT_GPIO),
+		.platform_data = &touch_i2c_conf,
+	},
+};
+#endif
 /* configuration data for mxt1386 */
 static const u8 mxt1386_config_data[] = {
 	/* T6 Object */
@@ -2803,6 +2861,7 @@ static struct msm_pm_boot_platform_data msm_pm_boot_pdata __initdata = {
 #define I2C_SIM  (1 << 3)
 #define I2C_FLUID (1 << 4)
 #define I2C_LIQUID (1 << 5)
+#define I2C_DRAGON (1 << 6)
 
 struct i2c_registry {
 	u8                     machs;
@@ -2948,6 +3007,15 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 		liquid_io_expander_i2c_info,
 		ARRAY_SIZE(liquid_io_expander_i2c_info),
 	},
+#ifdef CONFIG_TOUCHSCREEN_SITRONIX_I2C_TOUCH
+	{
+		I2C_SURF | I2C_DRAGON,
+		MSM_8960_GSBI3_QUP_I2C_BUS_ID,
+		sitronix_info,
+		ARRAY_SIZE(sitronix_info),
+	},
+#endif
+
 };
 #endif /* CONFIG_I2C */
 
@@ -2978,6 +3046,8 @@ static void __init register_i2c_devices(void)
 		mach_mask = I2C_LIQUID;
 	else if (machine_is_msm8960_mtp())
 		mach_mask = I2C_FFA;
+	else if (machine_is_apq8060a_dragon())
+		mach_mask = I2C_DRAGON;
 	else
 		pr_err("unmatched machine ID in register_i2c_devices\n");
 
@@ -3158,6 +3228,9 @@ static void __init msm8960_cdp_init(void)
 	if (machine_is_msm8960_liquid())
 		mxt_init_hw_liquid();
 	register_i2c_devices();
+#ifdef CONFIG_TOUCHSCREEN_SITRONIX_I2C_TOUCH
+	sitronix_config_gpio();
+#endif
 	msm8960_init_fb();
 	slim_register_board_info(msm_slim_devices,
 		ARRAY_SIZE(msm_slim_devices));

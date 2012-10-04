@@ -106,6 +106,20 @@ static struct gpiomux_setting cdc_mclk = {
 	.pull = GPIOMUX_PULL_NONE,
 };
 
+#ifdef CONFIG_TOUCHSCREEN_SITRONIX_I2C_TOUCH
+static struct gpiomux_setting ts_int_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_UP,
+};
+
+static struct gpiomux_setting ts_res_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_UP,
+};
+#endif
+
 static struct gpiomux_setting audio_auxpcm[] = {
 	/* Suspended state */
 	{
@@ -593,6 +607,27 @@ static struct msm_gpiomux_config msm8960_cyts_configs[] __initdata = {
 	},
 };
 
+#ifdef CONFIG_TOUCHSCREEN_SITRONIX_I2C_TOUCH
+static struct msm_gpiomux_config msm8960_sitronix_ts_configs[] __initdata = {
+	{	/* TS INTERRUPT */
+		.gpio = 46,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &ts_int_cfg,
+			[GPIOMUX_SUSPENDED] = &ts_int_cfg,
+		},
+	},
+	{	/* TS RESET */
+		.gpio = 52,
+		.settings = {
+			[GPIOMUX_ACTIVE]    = &ts_res_cfg,
+			[GPIOMUX_SUSPENDED] = &ts_res_cfg,
+		},
+	},
+};
+#endif
+
+
+
 #ifdef CONFIG_USB_EHCI_MSM_HSIC
 static struct msm_gpiomux_config msm8960_hsic_configs[] = {
 	{
@@ -929,9 +964,15 @@ int __init msm8960_init_gpiomux(void)
 
 	msm_gpiomux_install(msm8960_gsbi_configs,
 			ARRAY_SIZE(msm8960_gsbi_configs));
-
+	if (machine_is_apq8060a_dragon()) {
+#ifdef CONFIG_TOUCHSCREEN_SITRONIX_I2C_TOUCH
+		msm_gpiomux_install(msm8960_sitronix_ts_configs,
+			ARRAY_SIZE(msm8960_sitronix_ts_configs));
+#endif
+	} else {
 	msm_gpiomux_install(msm8960_cyts_configs,
 			ARRAY_SIZE(msm8960_cyts_configs));
+	}
 
 	msm_gpiomux_install(msm8960_slimbus_config,
 			ARRAY_SIZE(msm8960_slimbus_config));

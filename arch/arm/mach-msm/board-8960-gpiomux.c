@@ -21,7 +21,11 @@
 /* The SPI configurations apply to GSBI 1*/
 static struct gpiomux_setting spi_active = {
 	.func = GPIOMUX_FUNC_1,
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+	.drv = GPIOMUX_DRV_16MA,
+#else
 	.drv = GPIOMUX_DRV_12MA,
+#endif
 	.pull = GPIOMUX_PULL_NONE,
 };
 
@@ -33,7 +37,11 @@ static struct gpiomux_setting spi_suspended_config = {
 
 static struct gpiomux_setting spi_active_config2 = {
 	.func = GPIOMUX_FUNC_2,
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+	.drv = GPIOMUX_DRV_16MA,
+#else
 	.drv = GPIOMUX_DRV_8MA,
+#endif
 	.pull = GPIOMUX_PULL_NONE,
 };
 

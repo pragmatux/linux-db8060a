@@ -24,6 +24,9 @@
 #include <linux/mfd/pm8xxx/pm8xxx-adc.h>
 #include <linux/regulator/consumer.h>
 #include <linux/spi/spi.h>
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+#include <linux/spi/flash.h>
+#endif
 #include <linux/slimbus/slimbus.h>
 #include <linux/bootmem.h>
 #include <linux/msm_kgsl.h>
@@ -43,6 +46,11 @@
 #include <linux/memory.h>
 #include <linux/memblock.h>
 #include <linux/msm_thermal.h>
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <linux/mtd/physmap.h>
+#endif
 
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
@@ -1425,8 +1433,12 @@ static void __init msm8960_init_buses(void)
 }
 
 static struct msm_spi_platform_data msm8960_qup_spi_gsbi1_pdata = {
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+	.max_clock_speed = 10800000,
+#else
 	.max_clock_speed = 15060000,
 	.infinite_mode	 = 1
+#endif
 };
 
 #ifdef CONFIG_USB_MSM_OTG_72K
@@ -2397,12 +2409,37 @@ static struct msm_pm_sleep_status_data msm_pm_slp_sts_data = {
 	.mask = 1UL << 13,
 };
 
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+static struct mtd_partition dragonboard_spiflash_part[] = {
+	[0] = {
+		.name = "firmware",
+		.offset	= 0,
+		.size = SZ_512K,
+	},
+};
+static struct flash_platform_data dragonboard_spiflash_data = {
+	.name = "m25p80",
+	.parts = dragonboard_spiflash_part,
+	.nr_parts = ARRAY_SIZE(dragonboard_spiflash_part),
+};
+#else
 static struct ks8851_pdata spi_eth_pdata = {
 	.irq_gpio = KS8851_IRQ_GPIO,
 	.rst_gpio = KS8851_RST_GPIO,
 };
+#endif
 
 static struct spi_board_info spi_board_info[] __initdata = {
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+	{
+		.modalias		= "m45pe40",
+		.max_speed_hz		= 10800000,
+		.bus_num                = 0,
+		.chip_select		= 0,
+		.mode			= SPI_MODE_0,
+		.platform_data		= &dragonboard_spiflash_data,
+	},
+#else
 	{
 		.modalias               = "ks8851",
 		.irq                    = MSM_GPIO_TO_INT(KS8851_IRQ_GPIO),
@@ -2419,6 +2456,7 @@ static struct spi_board_info spi_board_info[] __initdata = {
 		.chip_select            = 1,
 		.mode                   = SPI_MODE_0,
 	},
+#endif
 };
 
 static struct platform_device msm_device_saw_core0 = {

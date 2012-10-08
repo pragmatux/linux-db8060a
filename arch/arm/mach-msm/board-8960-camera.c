@@ -690,6 +690,54 @@ static struct msm_camera_sensor_info msm_camera_sensor_imx091_data = {
 	.eeprom_info = &imx091_eeprom_info,
 };
 
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+static struct i2c_board_info s5k3h2_actuator_i2c_info = {
+	I2C_BOARD_INFO("msm_actuator", 0x18),
+};
+
+static struct msm_actuator_info s5k3h2_actuator_info = {
+	/*FIXME: Check with Qualcomm correct or not*/
+	.cam_name	= MSM_ACTUATOR_MAIN_CAM_6,
+	.board_info     = &s5k3h2_actuator_i2c_info,
+	.bus_id         = MSM_8960_GSBI4_QUP_I2C_BUS_ID,
+	.vcm_pwd        = 54,
+	.vcm_enable     = 1,
+};
+
+static struct camera_vreg_t msm_8960_s5k3h2_vreg[] = {
+	{"cam_vdig", REG_LDO, 1200000, 1200000, 105000},
+	{"cam_vana", REG_LDO, 2800000, 2850000, 85600},
+	{"cam_vio", REG_VS, 0, 0, 0},
+	{"cam_vaf", REG_LDO, 2800000, 2800000, 300000},
+};
+
+static struct msm_camera_sensor_flash_data flash_s5k3h2 = {
+	.flash_type     = MSM_CAMERA_FLASH_NONE,
+};
+
+static struct msm_camera_csi_lane_params s5k3h2_csi_lane_params = {
+	.csi_lane_assign = 0xE4,
+	.csi_lane_mask = 0x3,
+};
+
+static struct msm_camera_sensor_platform_info sensor_board_info_s5k3h2 = {
+	.mount_angle    = 0,
+	.cam_vreg = msm_8960_s5k3h2_vreg,
+	.num_vreg = ARRAY_SIZE(msm_8960_s5k3h2_vreg),
+	.gpio_conf = &msm_8960_back_cam_gpio_conf,
+	.csi_lane_params = &s5k3h2_csi_lane_params,
+};
+
+static struct msm_camera_sensor_info msm_camera_sensor_s5k3h2_data = {
+	.sensor_name    = "s5k3h2",
+	.pdata  = &msm_camera_csi_device_data[0],
+	.flash_data     = &flash_s5k3h2,
+	.sensor_platform_info = &sensor_board_info_s5k3h2,
+	.csi_if = 1,
+	.camera_type = BACK_CAMERA_2D,
+	.actuator_info = &s5k3h2_actuator_info,
+};
+#endif
 static struct pm8xxx_mpp_config_data privacy_light_on_config = {
 	.type		= PM8XXX_MPP_TYPE_SINK,
 	.level		= PM8XXX_MPP_CS_OUT_5MA,
@@ -792,6 +840,12 @@ static struct i2c_board_info msm8960_camera_i2c_boardinfo[] = {
 	I2C_BOARD_INFO("imx091", 0x34),
 	.platform_data = &msm_camera_sensor_imx091_data,
 	},
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+	{
+	I2C_BOARD_INFO("s5k3h2", 0x10),
+	.platform_data = &msm_camera_sensor_s5k3h2_data,
+	},
+#endif
 };
 
 struct msm_camera_board_info msm8960_camera_board_info = {

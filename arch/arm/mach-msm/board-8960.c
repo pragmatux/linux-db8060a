@@ -3026,7 +3026,8 @@ static void __init register_i2c_devices(void)
 	int i;
 #ifdef CONFIG_MSM_CAMERA
 	struct i2c_registry msm8960_camera_i2c_devices = {
-		I2C_SURF | I2C_FFA | I2C_FLUID | I2C_LIQUID | I2C_RUMI,
+		I2C_SURF | I2C_FFA | I2C_FLUID | I2C_LIQUID | I2C_RUMI |
+			I2C_DRAGON,
 		MSM_8960_GSBI4_QUP_I2C_BUS_ID,
 		msm8960_camera_board_info.board_info,
 		msm8960_camera_board_info.num_i2c_board_info,

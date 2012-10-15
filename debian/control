@@ -1,0 +1,12 @@
+Source: linux-db8060a
+Section: kernel
+Priority: extra
+Maintainer: Ryan Kuester <rkuester@insymbols.com>
+Build-Depends: debhelper (>= 7.0.50~), module-init-tools, android-mkbootimg
+Standards-Version: 3.8.4
+
+Package: linux-db8060a
+Architecture: armel
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Linux for Qualcomm DragonBoard 8060a
+ Linux kernel and modules for Qualcomm DragonBoard 8060a.

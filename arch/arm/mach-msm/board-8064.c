@@ -530,12 +530,11 @@ static void __init reserve_ion_memory(void)
 
 		if (heap->extra_data) {
 			int fixed_position = NOT_FIXED;
-			struct ion_cp_heap_pdata *pdata;
+			struct ion_cp_heap_pdata *pdata =
+				(struct ion_cp_heap_pdata *)heap->extra_data;
 
 			switch (heap->type) {
 			case ION_HEAP_TYPE_CP:
-				pdata =
-				(struct ion_cp_heap_pdata *)heap->extra_data;
 				fixed_position = pdata->fixed_position;
 				break;
 			case ION_HEAP_TYPE_CARVEOUT:

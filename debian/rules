@@ -10,6 +10,7 @@ DESTDIR=debian/linux-db8060a
 
 override_dh_auto_clean:
 	$(MAKE) $(KARGS) distclean
+	rm -f arch/arm/mach-msm/smd_rpc_sym.c
 
 override_dh_auto_build:
 	$(MAKE) $(KARGS) msm8960-perf_defconfig

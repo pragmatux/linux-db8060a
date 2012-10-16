@@ -17,7 +17,7 @@ override_dh_auto_build:
 	$(MAKE) $(KARGS) zImage modules
 	mkbootimg --kernel arch/arm/boot/zImage \
 	          --ramdisk /dev/null \
-	          --base 0x40200000 \
+	          --base 0x81200004 \
 	          --cmdline "console=ttyHSL0,115200,n8 androidboot.hardware=qcom loglevel=5 root=/dev/mmcblk0p13 rw rootwait" \
 	          --output arch/arm/boot/boot.img
 

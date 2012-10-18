@@ -1,12 +1,5 @@
-linux-db8060a (3.0.21-12374-gcae2925-1~1.gbp558bb3) UNRELEASED; urgency=low
+linux-db8060a (3.0.21-12374-gcae2925-1) unstable; urgency=low
 
-  ** SNAPSHOT build @558bb364928878c56b122bc431909750570a793f **
+  * Initial release.
 
-  * UNRELEASED
-
-  * Initial release of:
-  - Qualcomm CAF kernel
-  - Intrinsyc patches from "Release-1.1"
-  - Minor Pragmatux changes
-
- -- Ryan Kuester <rkuester@insymbols.com>  Mon, 15 Oct 2012 21:03:40 +0000
+ -- Ryan Kuester <rkuester@insymbols.com>  Wed, 17 Oct 2012 23:15:24 -0500

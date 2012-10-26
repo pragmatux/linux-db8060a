@@ -1230,10 +1230,17 @@ void __init msm8960_set_display_params(char *prim_panel, char *ext_panel)
 		pr_debug("msm_fb_pdata.prim_panel_name %s\n",
 			msm_fb_pdata.prim_panel_name);
 
-		if (strncmp((char *)msm_fb_pdata.prim_panel_name,
+		if ((strncmp((char *)msm_fb_pdata.prim_panel_name,
 			MIPI_VIDEO_TOSHIBA_WSVGA_PANEL_NAME,
 			strnlen(MIPI_VIDEO_TOSHIBA_WSVGA_PANEL_NAME,
-				PANEL_NAME_MAX_LEN))) {
+				PANEL_NAME_MAX_LEN))) &&
+			(strncmp((char *)msm_fb_pdata.prim_panel_name,
+						MIPI_VIDEO_WINTEK_WVGA_PANEL_NAME,
+						strnlen(MIPI_VIDEO_WINTEK_WVGA_PANEL_NAME,
+							PANEL_NAME_MAX_LEN))))
+
+
+				{
 			/* Disable splash for panels other than Toshiba WSVGA */
 			disable_splash = 1;
 		}

@@ -3044,6 +3044,19 @@ static struct i2c_board_info lps331_device_info[] __initdata = {
 	},
 };
 
+static struct lsm303dlhc_platform_data lsm303dlhc_platform_data = {
+
+	.axis_map_x = 0,
+	.axis_map_y = 1,
+	.axis_map_z = 2,
+	.negative_x = 0,
+	.negative_y = 0,
+	.negative_z = 0,
+	.irq_a1 = 10,
+	.irq_a2 = 67,
+	.irq_m = 49,
+};
+
 #define LSM303DLHC_ACC_INT1	(10)
 #define LSM303DLHC_ACC_INT2	(67)
 struct lsm303dlhc_acc_platform_data lsm303dlhc_acc_platform_data = {
@@ -3062,6 +3075,14 @@ static struct i2c_board_info lsm303dlhc_acc_device_info[] __initdata = {
 		I2C_BOARD_INFO( LSM303DLHC_ACC_DEV_NAME, 0x19),
 		.platform_data = &lsm303dlhc_acc_platform_data,
 		.irq = MSM_GPIO_TO_INT(LSM303DLHC_ACC_INT2),
+	},
+};
+#define LSM303DLHC_MAGNETIC_DRDY	(49)
+static struct i2c_board_info lsm303dlhc_mag_device_info[] __initdata = {
+	{
+		I2C_BOARD_INFO(LSM303DHLC_MAG_DEV_NAME, 0x1e),
+		.platform_data = &lsm303dlhc_platform_data,
+		.irq = MSM_GPIO_TO_INT(LSM303DLHC_MAGNETIC_DRDY),
 	},
 };
 #endif
@@ -3115,7 +3136,7 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 #ifdef CONFIG_MACH_APQ8060A_DRAGON
 	/* L3GD20 ST Micro 3-axis gyro sensor */
 	{
-		I2C_LIQUID | I2C_DRAGON,
+		I2C_LIQUID | I2C_SURF | I2C_DRAGON,
 		MSM_8960_GSBI12_QUP_I2C_BUS_ID,
 		l3gd20_gyro_device_info,
 		ARRAY_SIZE(l3gd20_gyro_device_info),
@@ -3133,6 +3154,13 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 		MSM_8960_GSBI12_QUP_I2C_BUS_ID,
 		lsm303dlhc_acc_device_info,
 		ARRAY_SIZE(lsm303dlhc_acc_device_info),
+	},
+	/* LSM303DLHC ST Micro Magnetometer */
+	{
+		I2C_LIQUID | I2C_DRAGON,
+		MSM_8960_GSBI12_QUP_I2C_BUS_ID,
+		lsm303dlhc_mag_device_info,
+		ARRAY_SIZE(lsm303dlhc_mag_device_info),
 	},
 #endif
 

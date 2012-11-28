@@ -13,6 +13,7 @@
 
 #include <asm/mach-types.h>
 #include <linux/gpio.h>
+#include <linux/i2c/adp1650.h>
 #include <mach/board.h>
 #include <mach/msm_bus_board.h>
 #include <mach/gpiomux.h>
@@ -704,6 +705,12 @@ static struct msm_actuator_info s5k3h2_actuator_info = {
 	.vcm_enable     = 1,
 };
 
+#define ADP1650_FLASH_NOW_GPIO	(3)
+#define ADP1650_FLASH_CNTL_EN1_GPIO (2)
+static struct msm_camera_sensor_flash_src msm_flash_adp1650_src = {
+	.flash_sr_type = MSM_CAMERA_FLASH_SRC_EXT,
+	._fsrc.ext_driver_src.flash_id = MAM_CAMERA_EXT_LED_FLASH_ADP1650,
+};
 static struct camera_vreg_t msm_8960_s5k3h2_vreg[] = {
 	{"cam_vdig", REG_LDO, 1200000, 1200000, 105000},
 	{"cam_vana", REG_LDO, 2800000, 2850000, 85600},
@@ -712,7 +719,10 @@ static struct camera_vreg_t msm_8960_s5k3h2_vreg[] = {
 };
 
 static struct msm_camera_sensor_flash_data flash_s5k3h2 = {
-	.flash_type     = MSM_CAMERA_FLASH_NONE,
+	.flash_type     = MSM_CAMERA_FLASH_LED,
+#ifdef CONFIG_MSM_CAMERA_FLASH
+	.flash_src	= &msm_flash_adp1650_src
+#endif
 };
 
 static struct msm_camera_csi_lane_params s5k3h2_csi_lane_params = {
@@ -720,11 +730,16 @@ static struct msm_camera_csi_lane_params s5k3h2_csi_lane_params = {
 	.csi_lane_mask = 0x3,
 };
 
+static struct msm_camera_i2c_conf apq8060a_cam_i2c_conf = {
+	.use_i2c_mux = 0,
+};
+
 static struct msm_camera_sensor_platform_info sensor_board_info_s5k3h2 = {
 	.mount_angle    = 0,
 	.cam_vreg = msm_8960_s5k3h2_vreg,
 	.num_vreg = ARRAY_SIZE(msm_8960_s5k3h2_vreg),
 	.gpio_conf = &msm_8960_back_cam_gpio_conf,
+	.i2c_conf  = &apq8060a_cam_i2c_conf,
 	.csi_lane_params = &s5k3h2_csi_lane_params,
 };
 
@@ -737,6 +752,52 @@ static struct msm_camera_sensor_info msm_camera_sensor_s5k3h2_data = {
 	.camera_type = BACK_CAMERA_2D,
 	.actuator_info = &s5k3h2_actuator_info,
 };
+
+static struct adp1650_leds_platform_data adp1650_flash_pdata = {
+	.timer_iocfg =  ADP1650_IOCFG_IO2_HIGH_IMP |
+			ADP1650_IOCFG_IO1_TORCH |
+			ADP1650_FL_TIMER_ms(100),
+
+	.current_set =  ADP1650_I_FL_mA(300) |
+			ADP1650_I_TOR_mA(100),
+
+	.output_mode  =	ADP1650_IL_PEAK_1A75 |
+			ADP1650_STR_LV_EDGE |
+			ADP1650_FREQ_FB_DIS |
+			ADP1650_OUTPUT_EN |
+			ADP1650_STR_MODE_HW |
+			ADP1650_STR_MODE_STBY,
+
+	.control      =	ADP1650_I_TX2_mA(400) |
+			ADP1650_I_TX1_mA(400),
+
+	.ad_mode      =	ADP1650_DYN_OVP_EN |
+			ADP1650_STR_POL_ACTIVE_HIGH |
+			ADP1650_I_ILED_2mA75 |
+			ADP1650_IL_DC_1A50 |
+			ADP1650_IL_DC_EN,
+
+	.batt_low     =	ADP1650_CL_SOFT_EN |
+			ADP1650_I_VB_LO_mA(400) |
+			ADP1650_V_VB_LO_3V50,
+
+	.gpio_enable  = -1,
+	/* Flash trigger name */
+	.triggername  = "msm_cam_flash",
+};
+
+static void adp1650_flash_init(void)
+{
+	if (gpio_request(ADP1650_FLASH_CNTL_EN1_GPIO,
+				"flash_enable_gpio") < 0) {
+		printk(KERN_WARNING "Error requesting gpio\n");
+	} else {
+		if (gpio_direction_output(
+			ADP1650_FLASH_CNTL_EN1_GPIO, 1) < 0) {
+			printk(KERN_WARNING "Error pulling GPIO high\n");
+		}
+	}
+}
 #endif
 static struct pm8xxx_mpp_config_data privacy_light_on_config = {
 	.type		= PM8XXX_MPP_TYPE_SINK,
@@ -801,6 +862,8 @@ void __init msm8960_init_cam(void)
 			mount_angle = 270;
 	}
 
+	if (machine_is_apq8060a_dragon())
+		adp1650_flash_init();
 	platform_device_register(&msm_camera_server);
 	platform_device_register(&msm8960_device_csiphy0);
 	platform_device_register(&msm8960_device_csiphy1);
@@ -844,6 +907,10 @@ static struct i2c_board_info msm8960_camera_i2c_boardinfo[] = {
 	{
 	I2C_BOARD_INFO("s5k3h2", 0x10),
 	.platform_data = &msm_camera_sensor_s5k3h2_data,
+	},
+	{
+	I2C_BOARD_INFO("adp1650", 0x30),
+	.platform_data =  &adp1650_flash_pdata,
 	},
 #endif
 };

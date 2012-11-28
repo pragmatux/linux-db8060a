@@ -13,11 +13,13 @@
  */
 #include <linux/kernel.h>
 #include <linux/errno.h>
+#include <linux/leds.h>
 #include <linux/leds-pmic8058.h>
 #include <linux/pwm.h>
 #include <linux/pmic8058-pwm.h>
 #include <linux/hrtimer.h>
 #include <linux/i2c.h>
+#include <linux/i2c/adp1650.h>
 #include <mach/pmic.h>
 #include <mach/camera.h>
 #include <mach/gpio.h>
@@ -31,7 +33,7 @@ enum msm_cam_flash_stat{
 };
 
 static struct i2c_client *sc628a_client;
-
+DEFINE_LED_TRIGGER(ledtrig_flash);
 static int32_t flash_i2c_txdata(struct i2c_client *client,
 		unsigned char *txdata, int length)
 {
@@ -342,6 +344,17 @@ int msm_camera_flash_external(
 					return rc;
 				}
 			}
+		} else if (external->flash_id ==
+			MAM_CAMERA_EXT_LED_FLASH_ADP1650) {
+			rc = adp1650_ext_init();
+			if (rc < 0) {
+				pr_err("adp1650 driver add failed\n");
+				rc = -ENOTSUPP;
+				return rc;
+			} else {
+				led_trigger_register_simple("msm_cam_flash",
+							&ledtrig_flash);
+			}
 		} else {
 			pr_err("Flash id not supported\n");
 			rc = -ENOTSUPP;
@@ -427,6 +440,8 @@ error:
 			sx150x_client = NULL;
 		}
 #endif
+		adp1650_ext_exit();
+		led_trigger_unregister_simple(ledtrig_flash);
 		break;
 
 	case MSM_CAMERA_LED_OFF:
@@ -434,13 +449,23 @@ error:
 			rc = flash_i2c_write_b(sc628a_client, 0x02, 0x00);
 		if (tps61310_client)
 			rc = flash_i2c_write_b(tps61310_client, 0x01, 0x00);
-		gpio_set_value_cansleep(external->led_en, 0);
-		gpio_set_value_cansleep(external->led_flash_en, 0);
+		if (external->flash_id ==
+			MAM_CAMERA_EXT_LED_FLASH_ADP1650) {
+			led_trigger_event(ledtrig_flash, 0);
+		} else {
+			gpio_set_value_cansleep(external->led_en, 0);
+			gpio_set_value_cansleep(external->led_flash_en, 0);
+		}
 		break;
 
 	case MSM_CAMERA_LED_LOW:
-		gpio_set_value_cansleep(external->led_en, 1);
-		gpio_set_value_cansleep(external->led_flash_en, 1);
+		if (external->flash_id ==
+		MAM_CAMERA_EXT_LED_FLASH_ADP1650) {
+			led_trigger_event(ledtrig_flash, 1);
+		} else {
+			gpio_set_value_cansleep(external->led_en, 1);
+			gpio_set_value_cansleep(external->led_flash_en, 1);
+		}
 		usleep_range(2000, 3000);
 		if (sc628a_client)
 			rc = flash_i2c_write_b(sc628a_client, 0x02, 0x06);
@@ -449,8 +474,13 @@ error:
 		break;
 
 	case MSM_CAMERA_LED_HIGH:
-		gpio_set_value_cansleep(external->led_en, 1);
-		gpio_set_value_cansleep(external->led_flash_en, 1);
+		if (external->flash_id ==
+		MAM_CAMERA_EXT_LED_FLASH_ADP1650) {
+			led_trigger_event(ledtrig_flash, 2);
+		} else {
+			gpio_set_value_cansleep(external->led_en, 1);
+			gpio_set_value_cansleep(external->led_flash_en, 1);
+		}
 		usleep_range(2000, 3000);
 		if (sc628a_client)
 			rc = flash_i2c_write_b(sc628a_client, 0x02, 0x49);

@@ -44,6 +44,7 @@
 #define ADP1650_STR_LV_EDGE		(0 << 5)
 #define ADP1650_STR_LV_LEVEL		(1 << 5)
 #define ADP1650_FREQ_FB_EN		(1 << 4)
+#define ADP1650_FREQ_FB_DIS		(0 << 4)
 #define ADP1650_OUTPUT_EN		(1 << 3)
 #define ADP1650_STR_MODE_SW		(0 << 2)
 #define ADP1650_STR_MODE_HW		(1 << 2)
@@ -142,6 +143,9 @@ struct adp1650_leds_platform_data {
 	/* system specific setup callback */
 	int	(*setup)(struct i2c_client *client,
 			 unsigned state);
+	/* Add default trigger */
+	char *triggername;
 };
-
+extern int adp1650_ext_init(void);
+extern void adp1650_ext_exit(void);
 #endif /* __LINUX_I2C_ADP1650_H */

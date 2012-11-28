@@ -103,9 +103,21 @@ int32_t msm_actuator_i2c_write(struct msm_actuator_ctrl_t *a_ctrl,
 				i2c_byte2 = value & 0xFF;
 			}
 		} else {
+			CDBG("%s: reg_add %x, hw_mask %x , hw_shift %x "
+				"hw_dword %x\n", __func__,
+				write_arr[i].reg_addr,
+				write_arr[i].hw_mask, write_arr[i].hw_shift,
+				hw_dword);
+			if (write_arr[i].hw_mask == 0xDEAD) {
+				CDBG("%s: Write lens position to register",
+					__func__);
+				i2c_byte1 = write_arr[i].reg_addr;
+				i2c_byte2 = next_lens_position;
+			} else {
 			i2c_byte1 = write_arr[i].reg_addr;
 			i2c_byte2 = (hw_dword & write_arr[i].hw_mask) >>
 				write_arr[i].hw_shift;
+			}
 		}
 		CDBG("%s: i2c_byte1:0x%x, i2c_byte2:0x%x\n", __func__,
 			i2c_byte1, i2c_byte2);

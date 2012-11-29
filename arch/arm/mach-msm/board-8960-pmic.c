@@ -246,35 +246,10 @@ static struct pm8xxx_keypad_platform_data keypad_data_liquid = {
 	.keymap_data            = &keymap_data_liquid,
 };
 
-static const unsigned int keymap_dragon[] = {
-	KEY(0, 0, KEY_VOLUMEDOWN),
-	KEY(0, 1, KEY_VOLUMEUP),
-	KEY(1, 3, KEY_ROTATE_LOCK),
-	KEY(1, 4, KEY_HOME),
-};
-
-static struct matrix_keymap_data keymap_data_dragon = {
-	.keymap_size    = ARRAY_SIZE(keymap_dragon),
-	.keymap         = keymap_dragon,
-};
-
-static struct pm8xxx_keypad_platform_data keypad_data_dragon = {
-	.input_name             = "keypad_8960_dragon",
-	.input_phys_device      = "keypad_8960/input0",
-	.num_rows               = 2,
-	.num_cols               = 5,
-	.rows_gpio_start	= PM8921_GPIO_PM_TO_SYS(9),
-	.cols_gpio_start	= PM8921_GPIO_PM_TO_SYS(1),
-	.debounce_ms            = 15,
-	.scan_delay_ms          = 32,
-	.row_hold_ns            = 91500,
-	.wakeup                 = 1,
-	.keymap_data            = &keymap_data_dragon,
-};
 
 static const unsigned int keymap[] = {
-	KEY(0, 0, KEY_VOLUMEUP),
-	KEY(0, 1, KEY_VOLUMEDOWN),
+	KEY(0, 1, KEY_VOLUMEUP),
+	KEY(0, 0, KEY_VOLUMEDOWN),
 	KEY(0, 2, KEY_CAMERA_SNAPSHOT),
 	KEY(0, 3, KEY_CAMERA_FOCUS),
 };
@@ -642,10 +617,6 @@ void __init msm8960_init_pmic(void)
 
 	if (machine_is_msm8960_liquid()) {
 		pm8921_platform_data.keypad_pdata = &keypad_data_liquid;
-		pm8921_platform_data.leds_pdata = &pm8xxx_leds_pdata_liquid;
-		pm8921_platform_data.bms_pdata->battery_type = BATT_DESAY;
-	} else if (machine_is_apq8060a_dragon()) {
-		pm8921_platform_data.keypad_pdata = &keypad_data_dragon;
 		pm8921_platform_data.leds_pdata = &pm8xxx_leds_pdata_liquid;
 		pm8921_platform_data.bms_pdata->battery_type = BATT_DESAY;
 	} else if (machine_is_msm8960_mtp()) {

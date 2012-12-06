@@ -89,6 +89,7 @@
 #include <linux/sensor/l3gd20_gyro.h>
 #include <linux/sensor/lps331ap.h>
 #include <linux/sensor/lsm303dlhc.h>
+#include <linux/sensor/lsm303dlhc_mag.h>
 #endif
 #include <linux/smsc3503.h>
 #include <linux/ion.h>
@@ -3044,16 +3045,8 @@ static struct i2c_board_info lps331_device_info[] __initdata = {
 	},
 };
 
-static struct lsm303dlhc_platform_data lsm303dlhc_platform_data = {
-
-	.axis_map_x = 0,
-	.axis_map_y = 1,
-	.axis_map_z = 2,
-	.negative_x = 0,
-	.negative_y = 0,
-	.negative_z = 0,
-	.irq_a1 = 10,
-	.irq_a2 = 67,
+static struct lsm303dlhc_mag_platform_data lsm303dlhc_mag_platform_data = {
+	.poll_interval_ms = 1000,
 	.irq_m = 49,
 };
 
@@ -3080,8 +3073,8 @@ static struct i2c_board_info lsm303dlhc_acc_device_info[] __initdata = {
 #define LSM303DLHC_MAGNETIC_DRDY	(49)
 static struct i2c_board_info lsm303dlhc_mag_device_info[] __initdata = {
 	{
-		I2C_BOARD_INFO(LSM303DHLC_MAG_DEV_NAME, 0x1e),
-		.platform_data = &lsm303dlhc_platform_data,
+		I2C_BOARD_INFO(LSM303DLHC_MAG_DEV_NAME, 0x1e),
+		.platform_data = &lsm303dlhc_mag_platform_data,
 		.irq = MSM_GPIO_TO_INT(LSM303DLHC_MAGNETIC_DRDY),
 	},
 };

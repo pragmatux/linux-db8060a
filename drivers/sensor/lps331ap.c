@@ -1074,7 +1074,10 @@ static int lps331ap_prs_disable(struct lps331ap_prs_data *prs)
 {
 	printk(KERN_INFO "%s\n", __func__);
 	if (atomic_cmpxchg(&prs->enabled, 1, 0)) {
-		cancel_delayed_work_sync(&prs->input_work);
+		if (prs->interruptible)
+			disable_irq(prs->client->irq);
+		else
+			cancel_delayed_work_sync(&prs->input_work);
 		lps331ap_prs_device_power_off(prs);
 	}
 

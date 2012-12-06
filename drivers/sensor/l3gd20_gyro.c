@@ -1253,7 +1253,7 @@ static int l3gd20_gyro_probe(struct i2c_client *client,
 	data->drop_next_event = 0;
 
 	l3gd20_config_regulator(data,true);
-
+	msleep(500);
 	/* read chip id */
 	ret = i2c_smbus_read_byte_data(client, WHO_AM_I);
 	if (ret != DEVICE_ID) {

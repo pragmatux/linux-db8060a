@@ -51,20 +51,18 @@
 #include	<linux/interrupt.h>
 #include	<linux/slab.h>
 
+#include <linux/sensor/sensors_core.h>
 #include	<linux/sensor/lsm303dlhc.h>
 #include	<linux/regulator/consumer.h>
 
+#undef	POLLING_MODE
 
 #define	G_MAX		16000
-
 
 #define SENSITIVITY_2G		1	/**	mg/LSB	*/
 #define SENSITIVITY_4G		2	/**	mg/LSB	*/
 #define SENSITIVITY_8G		4	/**	mg/LSB	*/
 #define SENSITIVITY_16G		12	/**	mg/LSB	*/
-
-
-
 
 /* Accelerometer Sensor Operating Mode */
 #define LSM303DLHC_ACC_ENABLE	0x01
@@ -92,6 +90,11 @@
 #define	INT_SRC1		0x31	/*	interrupt 1 source	*/
 #define	INT_THS1		0x32	/*	interrupt 1 threshold	*/
 #define	INT_DUR1		0x33	/*	interrupt 1 duration	*/
+
+#define	INT_CFG2		0x34	/*	interrupt 2 config	*/
+#define	INT_SRC2		0x35	/*	interrupt 2 source	*/
+#define	INT_THS2		0x36	/*	interrupt 2 threshold	*/
+#define	INT_DUR2		0x37	/*	interrupt 2 duration	*/
 
 
 #define	TT_CFG			0x38	/*	tap config		*/
@@ -209,6 +212,7 @@ struct lsm303dlhc_acc_data {
 	struct delayed_work input_work;
 
 	struct input_dev *input_dev;
+	struct device *dev;
 
 	int hw_initialized;
 	/* hw_working=-1 means not tested yet */
@@ -530,57 +534,6 @@ static int lsm303dlhc_acc_device_power_on(struct lsm303dlhc_acc_data *acc)
 	return 0;
 }
 
-static irqreturn_t lsm303dlhc_acc_isr1(int irq, void *dev)
-{
-	struct lsm303dlhc_acc_data *acc = dev;
-
-	disable_irq_nosync(irq);
-	queue_work(acc->irq1_work_queue, &acc->irq1_work);
-	printk(KERN_INFO "%s: isr1 queued\n", LSM303DLHC_ACC_DEV_NAME);
-
-	return IRQ_HANDLED;
-}
-
-static irqreturn_t lsm303dlhc_acc_isr2(int irq, void *dev)
-{
-	struct lsm303dlhc_acc_data *acc = dev;
-
-	disable_irq_nosync(irq);
-	queue_work(acc->irq2_work_queue, &acc->irq2_work);
-	printk(KERN_INFO "%s: isr2 queued\n", LSM303DLHC_ACC_DEV_NAME);
-
-	return IRQ_HANDLED;
-}
-
-static void lsm303dlhc_acc_irq1_work_func(struct work_struct *work)
-{
-
-	struct lsm303dlhc_acc_data *acc =
-	container_of(work, struct lsm303dlhc_acc_data, irq1_work);
-	/* TODO  add interrupt service procedure.
-		 ie:lsm303dlhc_acc_get_int1_source(acc); */
-	;
-	/*  */
-	printk(KERN_INFO "%s: IRQ1 triggered\n", LSM303DLHC_ACC_DEV_NAME);
-
-	enable_irq(acc->irq1);
-}
-
-static void lsm303dlhc_acc_irq2_work_func(struct work_struct *work)
-{
-
-	struct lsm303dlhc_acc_data *acc =
-	container_of(work, struct lsm303dlhc_acc_data, irq2_work);
-	/* TODO  add interrupt service procedure.
-		 ie:lsm303dlhc_acc_get_tap_source(acc); */
-	;
-	/*  */
-
-	printk(KERN_INFO "%s: IRQ2 triggered\n", LSM303DLHC_ACC_DEV_NAME);
-
-	enable_irq(acc->irq2);
-}
-
 static int lsm303dlhc_acc_update_g_range(struct lsm303dlhc_acc_data *acc,
 							u8 new_g_range)
 {
@@ -757,8 +710,10 @@ static int lsm303dlhc_acc_enable(struct lsm303dlhc_acc_data *acc)
 			atomic_set(&acc->enabled, 0);
 			return err;
 		}
+#ifdef POLLING_MODE
 		schedule_delayed_work(&acc->input_work,
 			msecs_to_jiffies(acc->pdata->poll_interval));
+#endif
 	}
 
 	return 0;
@@ -887,7 +842,7 @@ static ssize_t attr_set_range(struct device *dev,
 static ssize_t attr_get_enable(struct device *dev,
 			       struct device_attribute *attr, char *buf)
 {
-	struct lsm303dlhc_acc_data *acc = dev_get_drvdata(dev);
+	struct lsm303dlhc_acc_data *acc  = dev_get_drvdata(dev);
 	int val = atomic_read(&acc->enabled);
 	return sprintf(buf, "%d\n", val);
 }
@@ -896,7 +851,7 @@ static ssize_t attr_set_enable(struct device *dev,
 			       struct device_attribute *attr,
 			       const char *buf, size_t size)
 {
-	struct lsm303dlhc_acc_data *acc = dev_get_drvdata(dev);
+	struct lsm303dlhc_acc_data *acc  = dev_get_drvdata(dev);
 	unsigned long val;
 
 	if (strict_strtoul(buf, 10, &val))
@@ -1072,11 +1027,12 @@ static ssize_t attr_addr_set(struct device *dev, struct device_attribute *attr,
 }
 #endif
 
+static DEVICE_ATTR(enable, 0664, attr_get_enable, attr_set_enable);
+
 static struct device_attribute attributes[] = {
 
 	__ATTR(pollrate_ms, 0664, attr_get_polling_rate, attr_set_polling_rate),
 	__ATTR(range, 0664, attr_get_range, attr_set_range),
-	__ATTR(enable_device, 0664, attr_get_enable, attr_set_enable),
 	__ATTR(int1_config, 0664, attr_get_intconfig1, attr_set_intconfig1),
 	__ATTR(int1_duration, 0664, attr_get_duration1, attr_set_duration1),
 	__ATTR(int1_threshold, 0664, attr_get_thresh1, attr_set_thresh1),
@@ -1134,24 +1090,11 @@ static void lsm303dlhc_acc_input_work_func(struct work_struct *work)
 		dev_err(&acc->client->dev, "get_acceleration_data failed\n");
 	else
 		lsm303dlhc_acc_report_values(acc, xyz);
-
+#ifdef POLLING_MODE
 	schedule_delayed_work(&acc->input_work, msecs_to_jiffies(
 			acc->pdata->poll_interval));
+#endif
 	mutex_unlock(&acc->lock);
-}
-
-int lsm303dlhc_acc_input_open(struct input_dev *input)
-{
-	struct lsm303dlhc_acc_data *acc = input_get_drvdata(input);
-
-	return lsm303dlhc_acc_enable(acc);
-}
-
-void lsm303dlhc_acc_input_close(struct input_dev *dev)
-{
-	struct lsm303dlhc_acc_data *acc = input_get_drvdata(dev);
-
-	lsm303dlhc_acc_disable(acc);
 }
 
 static int lsm303dlhc_acc_validate_pdata(struct lsm303dlhc_acc_data *acc)
@@ -1202,13 +1145,7 @@ static int lsm303dlhc_acc_input_init(struct lsm303dlhc_acc_data *acc)
 		dev_err(&acc->client->dev, "input device allocation failed\n");
 		goto err0;
 	}
-
-	acc->input_dev->open = lsm303dlhc_acc_input_open;
-	acc->input_dev->close = lsm303dlhc_acc_input_close;
-	acc->input_dev->name = LSM303DLHC_ACC_DEV_NAME;
-	//acc->input_dev->name = "accelerometer";
-	acc->input_dev->id.bustype = BUS_I2C;
-	acc->input_dev->dev.parent = &acc->client->dev;
+	acc->input_dev->name = "accelerometer";
 
 	input_set_drvdata(acc->input_dev, acc);
 
@@ -1226,14 +1163,24 @@ static int lsm303dlhc_acc_input_init(struct lsm303dlhc_acc_data *acc)
 	/*	next is used for interruptB sources data if the case */
 	input_set_abs_params(acc->input_dev, ABS_WHEEL, INT_MIN, INT_MAX, 0, 0);
 
-
 	err = input_register_device(acc->input_dev);
+
+	dev_set_drvdata(&acc->input_dev->dev, acc);
+
 	if (err) {
-		dev_err(&acc->client->dev,
+		dev_err(&acc->input_dev->dev,
 				"unable to register input device %s\n",
 				acc->input_dev->name);
 		goto err1;
 	}
+
+	if (device_create_file(&acc->input_dev->dev,
+				&dev_attr_enable) < 0) {
+		pr_err("%s: Failed to create device file(%s)!\n", __func__,
+				dev_attr_enable.attr.name);
+		goto err0;
+	}
+
 
 	return 0;
 
@@ -1247,6 +1194,41 @@ static void lsm303dlhc_acc_input_cleanup(struct lsm303dlhc_acc_data *acc)
 {
 	input_unregister_device(acc->input_dev);
 	input_free_device(acc->input_dev);
+}
+
+static irqreturn_t lsm303dlhc_a_gpio_irq(int irq, void *device_data)
+{
+
+	struct lsm303dlhc_acc_data *acc = device_data;
+	int ret;
+	unsigned char reg;
+	struct input_dev *input;
+
+	disable_irq_nosync(irq);
+	mutex_lock(&acc->lock);
+	/* know your interrupt source */
+	if (irq == acc->irq1) {
+		reg = INT_SRC1;
+		input = acc->input_dev;
+	} else if (irq == acc->irq2) {
+		reg = INT_SRC2;
+		input = acc->input_dev;
+	} else {
+		dev_err(&acc->client->dev, "spurious interrupt");
+		enable_irq(irq);
+		mutex_unlock(&acc->lock);
+		return IRQ_HANDLED;
+	}
+
+	/* clear the value by reading it */
+	ret = lsm303dlhc_acc_i2c_read(acc, &reg, 1);
+	if (ret < 0)
+		dev_err(&acc->client->dev,
+			"clearing interrupt source failed error %d\n", ret);
+	enable_irq(irq);
+	schedule_delayed_work(&acc->input_work, 0);
+	mutex_unlock(&acc->lock);
+	return IRQ_HANDLED;
 }
 
 static int lsm303dlhc_acc_probe(struct i2c_client *client,
@@ -1331,19 +1313,21 @@ static int lsm303dlhc_acc_probe(struct i2c_client *client,
 							acc->pdata->gpio_int2);
 	}
 
+	/* sysfs for factory test */
+	acc->dev = sensors_classdev_register("accelerometer");
 	memset(acc->resume_state, 0, ARRAY_SIZE(acc->resume_state));
 
-	acc->resume_state[RES_CTRL_REG1] = LSM303DLHC_ACC_ENABLE_ALL_AXES;
+	acc->resume_state[RES_CTRL_REG1] = 0x47;
 	acc->resume_state[RES_CTRL_REG2] = 0x00;
-	acc->resume_state[RES_CTRL_REG3] = 0x00;
-	acc->resume_state[RES_CTRL_REG4] = 0x00;
-	acc->resume_state[RES_CTRL_REG5] = 0x00;
+	acc->resume_state[RES_CTRL_REG3] = 0x40;
+	acc->resume_state[RES_CTRL_REG4] = 0x80;
+	acc->resume_state[RES_CTRL_REG5] = 0x08;
 	acc->resume_state[RES_CTRL_REG6] = 0x00;
 
 	acc->resume_state[RES_TEMP_CFG_REG] = 0x00;
 	acc->resume_state[RES_FIFO_CTRL_REG] = 0x00;
-	acc->resume_state[RES_INT_CFG1] = 0x00;
-	acc->resume_state[RES_INT_THS1] = 0x00;
+	acc->resume_state[RES_INT_CFG1] = 0x3f;
+	acc->resume_state[RES_INT_THS1] = 0x10;
 	acc->resume_state[RES_INT_DUR1] = 0x00;
 
 	acc->resume_state[RES_TT_CFG] = 0x00;
@@ -1378,10 +1362,10 @@ static int lsm303dlhc_acc_probe(struct i2c_client *client,
 		goto err_power_off;
 	}
 
-
-	err = create_sysfs_interfaces(&client->dev);
+	dev_set_drvdata(acc->dev, acc);
+	err = create_sysfs_interfaces(acc->dev);
 	if (err < 0) {
-		dev_err(&client->dev,
+		dev_err(acc->dev,
 		   "device LSM303DLHC_ACC_DEV_NAME sysfs register failed\n");
 		goto err_input_cleanup;
 	}
@@ -1393,44 +1377,28 @@ static int lsm303dlhc_acc_probe(struct i2c_client *client,
 	atomic_set(&acc->enabled, 0);
 
 	if(acc->pdata->gpio_int1 >= 0){
-		INIT_WORK(&acc->irq1_work, lsm303dlhc_acc_irq1_work_func);
-		acc->irq1_work_queue =
-			create_singlethread_workqueue("lsm303dlhc_acc_wq1");
-		if (!acc->irq1_work_queue) {
-			err = -ENOMEM;
-			dev_err(&client->dev,
-					"cannot create work queue1: %d\n", err);
-			goto err_remove_sysfs_int;
-		}
-		err = request_irq(acc->irq1, lsm303dlhc_acc_isr1,
-			IRQF_TRIGGER_RISING, "lsm303dlhc_acc_irq1", acc);
+		err = request_threaded_irq(acc->irq1,
+				NULL, lsm303dlhc_a_gpio_irq,
+				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
+				"lsm303dlhc_acc_irq1", acc);
 		if (err < 0) {
 			dev_err(&client->dev, "request irq1 failed: %d\n", err);
-			goto err_destoyworkqueue1;
+			goto err_input_cleanup;
 		}
 		disable_irq_nosync(acc->irq1);
 	}
 
 	if(acc->pdata->gpio_int2 >= 0){
-		INIT_WORK(&acc->irq2_work, lsm303dlhc_acc_irq2_work_func);
-		acc->irq2_work_queue =
-			create_singlethread_workqueue("lsm303dlhc_acc_wq2");
-		if (!acc->irq2_work_queue) {
-			err = -ENOMEM;
-			dev_err(&client->dev,
-					"cannot create work queue2: %d\n", err);
-			goto err_free_irq1;
-		}
-		err = request_irq(acc->irq2, lsm303dlhc_acc_isr2,
-			IRQF_TRIGGER_RISING, "lsm303dlhc_acc_irq2", acc);
+		err = request_threaded_irq(acc->irq2,
+				NULL, lsm303dlhc_a_gpio_irq,
+				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
+				"lsm303dlhc_acc_irq2", acc);
 		if (err < 0) {
 			dev_err(&client->dev, "request irq2 failed: %d\n", err);
-			goto err_destoyworkqueue2;
+			goto err_input_cleanup;
 		}
 		disable_irq_nosync(acc->irq2);
 	}
-
-
 
 	mutex_unlock(&acc->lock);
 
@@ -1438,15 +1406,9 @@ static int lsm303dlhc_acc_probe(struct i2c_client *client,
 
 	return 0;
 
-err_destoyworkqueue2:
 	if(acc->pdata->gpio_int2 >= 0)
 		destroy_workqueue(acc->irq2_work_queue);
-err_free_irq1:
-	free_irq(acc->irq1, acc);
-err_destoyworkqueue1:
-	if(acc->pdata->gpio_int1 >= 0)
-		destroy_workqueue(acc->irq1_work_queue);
-err_remove_sysfs_int:
+
 	remove_sysfs_interfaces(&client->dev);
 err_input_cleanup:
 	lsm303dlhc_acc_input_cleanup(acc);
@@ -1459,7 +1421,6 @@ exit_kfree_pdata:
 	kfree(acc->pdata);
 err_mutexunlock:
 	mutex_unlock(&acc->lock);
-//err_freedata:
 	kfree(acc);
 exit_check_functionality_failed:
 	printk(KERN_ERR "%s: Driver Init failed\n", LSM303DLHC_ACC_DEV_NAME);
@@ -1485,7 +1446,7 @@ static int __devexit lsm303dlhc_acc_remove(struct i2c_client *client)
 
 	lsm303dlhc_acc_input_cleanup(acc);
 	lsm303dlhc_acc_device_power_off(acc);
-	remove_sysfs_interfaces(&client->dev);
+	remove_sysfs_interfaces(acc->dev);
 
 	if (acc->pdata->exit)
 		acc->pdata->exit();

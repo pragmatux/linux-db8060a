@@ -166,27 +166,7 @@ struct lsm303dlhc_acc_platform_data {
 	int gpio_int2;
 };
 
-struct lsm303dlhc_mag_platform_data {
 
-	unsigned int poll_interval;
-	unsigned int min_interval;
-
-	u8 h_range;
-
-	u8 axis_map_x;
-	u8 axis_map_y;
-	u8 axis_map_z;
-
-	u8 negate_x;
-	u8 negate_y;
-	u8 negate_z;
-
-	int (*init)(void);
-	void (*exit)(void);
-	int (*power_on)(void);
-	int (*power_off)(void);
-
-};
 #endif	/* __KERNEL__ */
 
 #endif	/* __LSM303DLHC_H__ */

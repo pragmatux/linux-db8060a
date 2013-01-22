@@ -945,6 +945,7 @@ static int do_write(struct fsg_common *common)
 	amount_left_to_req = common->data_size_from_cmnd;
 	amount_left_to_write = common->data_size_from_cmnd;
 
+
 	while (amount_left_to_write > 0) {
 
 		/* Queue a request for more data from the host */
@@ -2012,6 +2013,7 @@ static int check_command(struct fsg_common *common, int cmnd_size,
 static int do_scsi_command(struct fsg_common *common)
 {
 	struct fsg_buffhd	*bh;
+	struct fsg_lun		*curlun = common->curlun;
 	int			rc;
 	int			reply = -EINVAL;
 	int			i;
@@ -2031,8 +2033,9 @@ static int do_scsi_command(struct fsg_common *common)
 	common->short_packet_received = 0;
 
 	down_read(&common->filesem);	/* We're using the backing file */
+	curlun = (common->lun < common->nluns) ?
+			&common->luns[common->lun] : common->curlun;
 	switch (common->cmnd[0]) {
-
 	case INQUIRY:
 		common->data_size_from_cmnd = common->cmnd[4];
 		reply = check_command(common, 6, DATA_DIR_TO_HOST,
@@ -2092,7 +2095,7 @@ static int do_scsi_command(struct fsg_common *common)
 	case READ_6:
 		i = common->cmnd[4];
 		common->data_size_from_cmnd = (i == 0 ? 256 : i) <<
-				common->curlun->blkbits;
+				curlun->blkbits;
 		reply = check_command(common, 6, DATA_DIR_TO_HOST,
 				      (7<<1) | (1<<4), 1,
 				      "READ(6)");
@@ -2103,7 +2106,7 @@ static int do_scsi_command(struct fsg_common *common)
 	case READ_10:
 		common->data_size_from_cmnd =
 				get_unaligned_be16(&common->cmnd[7]) <<
-						common->curlun->blkbits;
+						curlun->blkbits;
 		reply = check_command(common, 10, DATA_DIR_TO_HOST,
 				      (1<<1) | (0xf<<2) | (3<<7), 1,
 				      "READ(10)");
@@ -2114,7 +2117,7 @@ static int do_scsi_command(struct fsg_common *common)
 	case READ_12:
 		common->data_size_from_cmnd =
 				get_unaligned_be32(&common->cmnd[6]) <<
-						common->curlun->blkbits;
+						curlun->blkbits;
 		reply = check_command(common, 12, DATA_DIR_TO_HOST,
 				      (1<<1) | (0xf<<2) | (0xf<<6), 1,
 				      "READ(12)");
@@ -2132,7 +2135,7 @@ static int do_scsi_command(struct fsg_common *common)
 		break;
 
 	case READ_HEADER:
-		if (!common->curlun || !common->curlun->cdrom)
+		if (!curlun || !curlun->cdrom)
 			goto unknown_cmnd;
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
@@ -2144,7 +2147,7 @@ static int do_scsi_command(struct fsg_common *common)
 		break;
 
 	case READ_TOC:
-		if (!common->curlun || !common->curlun->cdrom)
+		if (!curlun || !curlun->cdrom)
 			goto unknown_cmnd;
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
@@ -2215,7 +2218,7 @@ static int do_scsi_command(struct fsg_common *common)
 	case WRITE_6:
 		i = common->cmnd[4];
 		common->data_size_from_cmnd = (i == 0 ? 256 : i) <<
-					common->curlun->blkbits;
+					curlun->blkbits;
 		reply = check_command(common, 6, DATA_DIR_FROM_HOST,
 				      (7<<1) | (1<<4), 1,
 				      "WRITE(6)");
@@ -2226,7 +2229,7 @@ static int do_scsi_command(struct fsg_common *common)
 	case WRITE_10:
 		common->data_size_from_cmnd =
 				get_unaligned_be16(&common->cmnd[7]) <<
-						common->curlun->blkbits;
+						curlun->blkbits;
 		reply = check_command(common, 10, DATA_DIR_FROM_HOST,
 				      (1<<1) | (0xf<<2) | (3<<7), 1,
 				      "WRITE(10)");
@@ -2237,7 +2240,7 @@ static int do_scsi_command(struct fsg_common *common)
 	case WRITE_12:
 		common->data_size_from_cmnd =
 				get_unaligned_be32(&common->cmnd[6]) <<
-						common->curlun->blkbits;
+						curlun->blkbits;
 		reply = check_command(common, 12, DATA_DIR_FROM_HOST,
 				      (1<<1) | (0xf<<2) | (0xf<<6), 1,
 				      "WRITE(12)");
@@ -2264,7 +2267,7 @@ unknown_cmnd:
 		reply = check_command(common, common->cmnd_size,
 				      DATA_DIR_UNKNOWN, 0xff, 0, unknown);
 		if (reply == 0) {
-			common->curlun->sense_data = SS_INVALID_COMMAND;
+			curlun->sense_data = SS_INVALID_COMMAND;
 			reply = -EINVAL;
 		}
 		break;
@@ -2740,6 +2743,7 @@ static int fsg_main_thread(void *common_)
 			continue;
 		}
 #endif
+
 		if (send_status(common))
 			continue;
 

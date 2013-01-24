@@ -924,7 +924,7 @@ static int msm8960_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	pr_debug("%s(), dev_name%s\n", __func__, dev_name(cpu_dai->dev));
 
-	if (machine_is_msm8960_liquid()) {
+	if (machine_is_msm8960_liquid() || machine_is_apq8060a_dragon()) {
 		top_spk_pamp_gpio = (PM8921_GPIO_PM_TO_SYS(19));
 		bottom_spk_pamp_gpio = (PM8921_GPIO_PM_TO_SYS(18));
 	}

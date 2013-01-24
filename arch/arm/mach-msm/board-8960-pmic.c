@@ -621,6 +621,8 @@ void __init msm8960_init_pmic(void)
 		pm8921_platform_data.bms_pdata->battery_type = BATT_DESAY;
 	} else if (machine_is_msm8960_mtp()) {
 		pm8921_platform_data.bms_pdata->battery_type = BATT_PALLADIUM;
+	} else if (machine_is_apq8060a_dragon()) {
+		pm8921_platform_data.bms_pdata->battery_type = BATT_ICR18650;
 	}
 
 	if (machine_is_msm8960_fluid())

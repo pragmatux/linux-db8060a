@@ -402,20 +402,6 @@ config FB_MSM_MIPI_WINTEK_VIDEO_WVGA
 	---help---
 	  Support for Wintek WVGA (800x480) panel.
 
-config FB_MSM_MIPI_WINTEK_VIDEO_WVGA_BL_LEVELS
-	int "Define number of backlight levels."
-	depends on FB_MSM_MIPI_WINTEK_VIDEO_WVGA
-	range 1 255
-	default 1
-	---help---
-	  Define number of backlight levels. Depends on HW configuration:
-	  If R204 is stuffed, GPIO 24 turns on/off backlight. Select 1 level
-	  If R205 is stuffed, LCD controller generates PWM signal to control
-	  backlight. Select 1...255. Suggested value is 15.
-
-
-
-
 config FB_MSM_OVERLAY0_WRITEBACK
 	depends on FB_MSM_OVERLAY
         bool "MDP overlay0 write back mode enable"

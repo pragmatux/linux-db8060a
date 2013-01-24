@@ -484,6 +484,8 @@ static int mipi_dsi_wintek_panel_power(int on)
 	int rc;
 	pr_debug("%s: state : %d\n", __func__, on);
 
+	mipi_dsi_panel_pwm_cfg();
+
 	if (!dsi_power_on) {
 
 		reg_l8 = regulator_get(&msm_mipi_dsi1_device.dev,

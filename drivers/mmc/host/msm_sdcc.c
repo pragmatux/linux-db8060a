@@ -5296,6 +5296,7 @@ msmsdcc_probe(struct platform_device *pdev)
 	mmc->caps |= MMC_CAP_MMC_HIGHSPEED | MMC_CAP_SD_HIGHSPEED;
 	mmc->caps |= MMC_CAP_WAIT_WHILE_BUSY | MMC_CAP_ERASE;
 	mmc->caps |= MMC_CAP_HW_RESET;
+#ifdef CONFIG_MMC_MSM_SDC4_SUPPORT
 	/*
 	 * If we send the CMD23 before multi block write/read command
 	 * then we need not to send CMD12 at the end of the transfer.
@@ -5303,8 +5304,11 @@ msmsdcc_probe(struct platform_device *pdev)
 	 * status is to use the AUTO_PROG_DONE status provided by SDCC4
 	 * controller. So let's enable the CMD23 for SDCC4 only.
 	 */
-	if (!plat->disable_cmd23 && host->sdcc_version)
-		mmc->caps |= MMC_CAP_CMD23;
+	if (pdev->id == 4) {
+		if (!plat->disable_cmd23 && host->sdcc_version)
+			mmc->caps |= MMC_CAP_CMD23;
+	}
+#endif
 
 	mmc->caps |= plat->uhs_caps;
 	mmc->caps2 |= plat->uhs_caps2;

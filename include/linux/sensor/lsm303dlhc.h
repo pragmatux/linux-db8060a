@@ -93,7 +93,7 @@ Revision 1-0-7 26/11/2010
 /* 	Magnetometer section defines	 	*/
 /************************************************/
 
-#define LSM303DHLC_MAG_DEV_NAME "lsm303dlhc_m"
+#define	LSM303DLHC_MAG_DEV_NAME		"lsm303dlhc_mag"
 #define LSM303DLHC_MAG_I2C_SAD		0x1E
 
 /* Magnetometer Sensor Full Scale */
@@ -167,6 +167,27 @@ struct lsm303dlhc_acc_platform_data {
 };
 
 
+struct lsm303dlhc_mag_platform_data {
+
+	unsigned int poll_interval;
+	unsigned int min_interval;
+
+	u8 h_range;
+
+	u8 axis_map_x;
+	u8 axis_map_y;
+	u8 axis_map_z;
+
+	u8 negate_x;
+	u8 negate_y;
+	u8 negate_z;
+
+	int (*init)(void);
+	void (*exit)(void);
+	int (*power_on)(void);
+	int (*power_off)(void);
+
+};
 #endif	/* __KERNEL__ */
 
 #endif	/* __LSM303DLHC_H__ */

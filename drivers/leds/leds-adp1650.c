@@ -27,7 +27,7 @@ struct adp1650_chip {
 	bool use_enable;
 };
 
-static struct adp1650_leds_platform_data ad1650_default_pdata = {
+static struct adp1650_leds_platform_data adp1650_default_pdata = {
 	.timer_iocfg =	ADP1650_IOCFG_IO2_HIGH_IMP |
 			ADP1650_IOCFG_IO1_TORCH |
 			ADP1650_FL_TIMER_ms(500),
@@ -243,7 +243,7 @@ static int __devinit adp1650_probe(struct i2c_client *client,
 
 	if (!client->dev.platform_data) {
 		dev_warn(&client->dev, "pdata is not available, using default\n");
-		chip->pdata = &ad1650_default_pdata;
+		chip->pdata = &adp1650_default_pdata;
 	} else {
 		chip->pdata = client->dev.platform_data;
 	}

@@ -198,7 +198,7 @@ static struct msm_camera_sensor_flash_src msm_flash_src = {
 	.flash_sr_type = MSM_CAMERA_FLASH_SRC_EXT,
 	._fsrc.ext_driver_src.led_en = VFE_CAMIF_TIMER1_GPIO,
 	._fsrc.ext_driver_src.led_flash_en = VFE_CAMIF_TIMER2_GPIO,
-	._fsrc.ext_driver_src.flash_id = MAM_CAMERA_EXT_LED_FLASH_SC628A,
+	._fsrc.ext_driver_src.flash_id = MSM_CAMERA_EXT_LED_FLASH_SC628A,
 };
 #endif
 
@@ -709,7 +709,7 @@ static struct msm_actuator_info s5k3h2_actuator_info = {
 #define ADP1650_FLASH_CNTL_EN1_GPIO (2)
 static struct msm_camera_sensor_flash_src msm_flash_adp1650_src = {
 	.flash_sr_type = MSM_CAMERA_FLASH_SRC_EXT,
-	._fsrc.ext_driver_src.flash_id = MAM_CAMERA_EXT_LED_FLASH_ADP1650,
+	._fsrc.ext_driver_src.flash_id = MSM_CAMERA_EXT_LED_FLASH_ADP1650,
 };
 static struct camera_vreg_t msm_8960_s5k3h2_vreg[] = {
 	{"cam_vdig", REG_LDO, 1200000, 1200000, 105000},

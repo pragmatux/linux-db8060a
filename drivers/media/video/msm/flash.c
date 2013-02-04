@@ -325,7 +325,7 @@ int msm_camera_flash_external(
 	switch (led_state) {
 
 	case MSM_CAMERA_LED_INIT:
-		if (external->flash_id == MAM_CAMERA_EXT_LED_FLASH_SC628A) {
+		if (external->flash_id == MSM_CAMERA_EXT_LED_FLASH_SC628A) {
 			if (!sc628a_client) {
 				rc = i2c_add_driver(&sc628a_i2c_driver);
 				if (rc < 0 || sc628a_client == NULL) {
@@ -335,7 +335,7 @@ int msm_camera_flash_external(
 				}
 			}
 		} else if (external->flash_id ==
-			MAM_CAMERA_EXT_LED_FLASH_TPS61310) {
+			MSM_CAMERA_EXT_LED_FLASH_TPS61310) {
 			if (!tps61310_client) {
 				rc = i2c_add_driver(&tps61310_i2c_driver);
 				if (rc < 0 || tps61310_client == NULL) {
@@ -345,7 +345,7 @@ int msm_camera_flash_external(
 				}
 			}
 		} else if (external->flash_id ==
-			MAM_CAMERA_EXT_LED_FLASH_ADP1650) {
+			MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			rc = adp1650_ext_init();
 			if (rc < 0) {
 				pr_err("adp1650 driver add failed\n");
@@ -450,7 +450,7 @@ error:
 		if (tps61310_client)
 			rc = flash_i2c_write_b(tps61310_client, 0x01, 0x00);
 		if (external->flash_id ==
-			MAM_CAMERA_EXT_LED_FLASH_ADP1650) {
+			MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			led_trigger_event(ledtrig_flash, 0);
 		} else {
 			gpio_set_value_cansleep(external->led_en, 0);
@@ -460,7 +460,7 @@ error:
 
 	case MSM_CAMERA_LED_LOW:
 		if (external->flash_id ==
-		MAM_CAMERA_EXT_LED_FLASH_ADP1650) {
+		MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			led_trigger_event(ledtrig_flash, 1);
 		} else {
 			gpio_set_value_cansleep(external->led_en, 1);
@@ -475,7 +475,7 @@ error:
 
 	case MSM_CAMERA_LED_HIGH:
 		if (external->flash_id ==
-		MAM_CAMERA_EXT_LED_FLASH_ADP1650) {
+		MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			led_trigger_event(ledtrig_flash, 2);
 		} else {
 			gpio_set_value_cansleep(external->led_en, 1);

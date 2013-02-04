@@ -122,9 +122,9 @@ struct msm_camera_sensor_flash_current_driver {
 };
 
 enum msm_camera_ext_led_flash_id {
-	MAM_CAMERA_EXT_LED_FLASH_SC628A,
-	MAM_CAMERA_EXT_LED_FLASH_TPS61310,
-	MAM_CAMERA_EXT_LED_FLASH_ADP1650,
+	MSM_CAMERA_EXT_LED_FLASH_SC628A,
+	MSM_CAMERA_EXT_LED_FLASH_TPS61310,
+	MSM_CAMERA_EXT_LED_FLASH_ADP1650,
 };
 
 struct msm_camera_sensor_flash_external {

@@ -705,11 +705,13 @@ static struct msm_actuator_info s5k3h2_actuator_info = {
 	.vcm_enable     = 1,
 };
 
-#define ADP1650_FLASH_NOW_GPIO	(3)
+#define ADP1650_FLASH_NOW_GPIO	(3)		/* Connected, but not used */
 #define ADP1650_FLASH_CNTL_EN1_GPIO (2)
 static struct msm_camera_sensor_flash_src msm_flash_adp1650_src = {
-	.flash_sr_type = MSM_CAMERA_FLASH_SRC_EXT,
-	._fsrc.ext_driver_src.flash_id = MSM_CAMERA_EXT_LED_FLASH_ADP1650,
+	.flash_sr_type				= MSM_CAMERA_FLASH_SRC_EXT,
+	._fsrc.ext_driver_src.led_en		= -1,	/* Invalid GPIO being ignored */
+	._fsrc.ext_driver_src.led_flash_en	= -1,	/* Invalid GPIO being ignored */
+	._fsrc.ext_driver_src.flash_id		= MSM_CAMERA_EXT_LED_FLASH_ADP1650,
 };
 static struct camera_vreg_t msm_8960_s5k3h2_vreg[] = {
 	{"cam_vdig", REG_LDO, 1200000, 1200000, 105000},
@@ -864,6 +866,7 @@ void __init msm8960_init_cam(void)
 
 	if (machine_is_apq8060a_dragon())
 		adp1650_flash_init();
+
 	platform_device_register(&msm_camera_server);
 	platform_device_register(&msm8960_device_csiphy0);
 	platform_device_register(&msm8960_device_csiphy1);
@@ -910,7 +913,7 @@ static struct i2c_board_info msm8960_camera_i2c_boardinfo[] = {
 	},
 	{
 	I2C_BOARD_INFO("adp1650", 0x30),
-	.platform_data =  &adp1650_flash_pdata,
+	.platform_data = &adp1650_flash_pdata,
 	},
 #endif
 };

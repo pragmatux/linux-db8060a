@@ -384,30 +384,37 @@ int msm_camera_flash_external(
 			i2c_put_adapter(adapter);
 		}
 #endif
-		if (sc628a_client)
-			rc = gpio_request(external->led_en, "sc628a");
-		if (tps61310_client)
-			rc = gpio_request(external->led_en, "tps61310");
 
-		if (!rc) {
-			gpio_direction_output(external->led_en, 0);
-		} else {
-			goto error;
+		if (gpio_is_valid(external->led_en)) {
+			if (sc628a_client)
+				rc = gpio_request(external->led_en, "sc628a");
+			if (tps61310_client)
+				rc = gpio_request(external->led_en, "tps61310");
+
+			if (!rc) {
+				gpio_direction_output(external->led_en, 0);
+			} else {
+				goto error_led_en;
+			}
 		}
+		if (gpio_is_valid(external->led_flash_en)) {
+			if (sc628a_client)
+				rc = gpio_request(external->led_flash_en, "sc628a");
+			if (tps61310_client)
+				rc = gpio_request(external->led_flash_en, "tps61310");
 
-		if (sc628a_client)
-			rc = gpio_request(external->led_flash_en, "sc628a");
-		if (tps61310_client)
-			rc = gpio_request(external->led_flash_en, "tps61310");
-
-		if (!rc) {
-			gpio_direction_output(external->led_flash_en, 0);
-			break;
+			if (!rc) {
+				gpio_direction_output(external->led_flash_en, 0);
+			} else {
+				goto error_led_flash_en;
+			}
 		}
+		break;
 
+error_led_flash_en:
 		gpio_set_value_cansleep(external->led_en, 0);
 		gpio_free(external->led_en);
-error:
+error_led_en:
 		pr_err("%s gpio request failed\n", __func__);
 		if (sc628a_client) {
 			i2c_del_driver(&sc628a_i2c_driver);
@@ -421,10 +428,14 @@ error:
 
 	case MSM_CAMERA_LED_RELEASE:
 		if (sc628a_client || tps61310_client) {
-			gpio_set_value_cansleep(external->led_en, 0);
-			gpio_free(external->led_en);
-			gpio_set_value_cansleep(external->led_flash_en, 0);
-			gpio_free(external->led_flash_en);
+			if (gpio_is_valid(external->led_en)) {
+				gpio_set_value_cansleep(external->led_en, 0);
+				gpio_free(external->led_en);
+			}
+			if (gpio_is_valid(external->led_flash_en)) {
+				gpio_set_value_cansleep(external->led_flash_en, 0);
+				gpio_free(external->led_flash_en);
+			}
 			if (sc628a_client) {
 				i2c_del_driver(&sc628a_i2c_driver);
 				sc628a_client = NULL;
@@ -434,14 +445,19 @@ error:
 				tps61310_client = NULL;
 			}
 		}
+
 #if defined(CONFIG_GPIO_SX150X) || defined(CONFIG_GPIO_SX150X_MODULE)
 		if (external->expander_info && sx150x_client) {
 			i2c_unregister_device(sx150x_client);
 			sx150x_client = NULL;
 		}
 #endif
-		adp1650_ext_exit();
-		led_trigger_unregister_simple(ledtrig_flash);
+
+		if (external->flash_id ==
+			MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
+			adp1650_ext_exit();
+			led_trigger_unregister_simple(ledtrig_flash);
+		}
 		break;
 
 	case MSM_CAMERA_LED_OFF:
@@ -452,20 +468,23 @@ error:
 		if (external->flash_id ==
 			MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			led_trigger_event(ledtrig_flash, 0);
-		} else {
-			gpio_set_value_cansleep(external->led_en, 0);
-			gpio_set_value_cansleep(external->led_flash_en, 0);
 		}
+		if (gpio_is_valid(external->led_en))
+			gpio_set_value_cansleep(external->led_en, 0);
+		if (gpio_is_valid(external->led_flash_en))
+			gpio_set_value_cansleep(external->led_flash_en, 0);
 		break;
 
 	case MSM_CAMERA_LED_LOW:
 		if (external->flash_id ==
 		MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			led_trigger_event(ledtrig_flash, 1);
-		} else {
-			gpio_set_value_cansleep(external->led_en, 1);
-			gpio_set_value_cansleep(external->led_flash_en, 1);
 		}
+		if (gpio_is_valid(external->led_en))
+			gpio_set_value_cansleep(external->led_en, 1);
+		if (gpio_is_valid(external->led_flash_en))
+			gpio_set_value_cansleep(external->led_flash_en, 1);
+
 		usleep_range(2000, 3000);
 		if (sc628a_client)
 			rc = flash_i2c_write_b(sc628a_client, 0x02, 0x06);
@@ -477,10 +496,12 @@ error:
 		if (external->flash_id ==
 		MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			led_trigger_event(ledtrig_flash, 2);
-		} else {
-			gpio_set_value_cansleep(external->led_en, 1);
-			gpio_set_value_cansleep(external->led_flash_en, 1);
 		}
+		if (gpio_is_valid(external->led_en))
+			gpio_set_value_cansleep(external->led_en, 1);
+		if (gpio_is_valid(external->led_flash_en))
+			gpio_set_value_cansleep(external->led_flash_en, 1);
+
 		usleep_range(2000, 3000);
 		if (sc628a_client)
 			rc = flash_i2c_write_b(sc628a_client, 0x02, 0x49);

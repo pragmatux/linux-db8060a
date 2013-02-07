@@ -755,6 +755,7 @@ static struct msm_camera_sensor_info msm_camera_sensor_s5k3h2_data = {
 	.actuator_info = &s5k3h2_actuator_info,
 };
 
+#ifdef CONFIG_MSM_CAMERA_FLASH_ADP1650
 static struct adp1650_leds_platform_data adp1650_flash_pdata = {
 	.timer_iocfg =  ADP1650_IOCFG_IO2_HIGH_IMP |
 			ADP1650_IOCFG_IO1_TORCH |
@@ -787,6 +788,7 @@ static struct adp1650_leds_platform_data adp1650_flash_pdata = {
 	/* Flash trigger name */
 	.triggername  = "msm_cam_flash",
 };
+#endif
 
 static void adp1650_flash_init(void)
 {
@@ -801,6 +803,7 @@ static void adp1650_flash_init(void)
 	}
 }
 #endif
+
 static struct pm8xxx_mpp_config_data privacy_light_on_config = {
 	.type		= PM8XXX_MPP_TYPE_SINK,
 	.level		= PM8XXX_MPP_CS_OUT_5MA,
@@ -911,10 +914,12 @@ static struct i2c_board_info msm8960_camera_i2c_boardinfo[] = {
 	I2C_BOARD_INFO("s5k3h2", 0x10),
 	.platform_data = &msm_camera_sensor_s5k3h2_data,
 	},
+#ifdef CONFIG_MSM_CAMERA_FLASH_ADP1650
 	{
 	I2C_BOARD_INFO("adp1650", 0x30),
 	.platform_data = &adp1650_flash_pdata,
 	},
+#endif
 #endif
 };
 

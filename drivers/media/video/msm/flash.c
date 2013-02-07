@@ -19,7 +19,9 @@
 #include <linux/pmic8058-pwm.h>
 #include <linux/hrtimer.h>
 #include <linux/i2c.h>
+#ifdef CONFIG_MSM_CAMERA_FLASH_ADP1650
 #include <linux/i2c/adp1650.h>
+#endif
 #include <mach/pmic.h>
 #include <mach/camera.h>
 #include <mach/gpio.h>
@@ -32,8 +34,7 @@ enum msm_cam_flash_stat{
 	MSM_CAM_FLASH_ON,
 };
 
-static struct i2c_client *sc628a_client;
-DEFINE_LED_TRIGGER(ledtrig_flash);
+#if defined(CONFIG_MSM_CAMERA_FLASH_SC628A) || defined(CONFIG_MSM_CAMERA_FLASH_TPS61310)
 static int32_t flash_i2c_txdata(struct i2c_client *client,
 		unsigned char *txdata, int length)
 {
@@ -74,6 +75,10 @@ static int32_t flash_i2c_write_b(struct i2c_client *client,
 
 	return rc;
 }
+#endif
+
+#if defined(CONFIG_MSM_CAMERA_FLASH_SC628A)
+static struct i2c_client *sc628a_client;
 
 static const struct i2c_device_id sc628a_i2c_id[] = {
 	{"sc628a", 0},
@@ -109,7 +114,9 @@ static struct i2c_driver sc628a_i2c_driver = {
 		.name = "sc628a",
 	},
 };
+#endif
 
+#if defined(CONFIG_MSM_CAMERA_FLASH_TPS61310)
 static struct i2c_client *tps61310_client;
 
 static const struct i2c_device_id tps61310_i2c_id[] = {
@@ -152,6 +159,11 @@ static struct i2c_driver tps61310_i2c_driver = {
 		.name = "tps61310",
 	},
 };
+#endif
+
+#if defined(CONFIG_MSM_CAMERA_FLASH_ADP1650)
+DEFINE_LED_TRIGGER(ledtrig_flash);
+#endif
 
 static int config_flash_gpio_table(enum msm_cam_flash_stat stat,
 			struct msm_camera_sensor_strobe_flash_data *sfdata)
@@ -320,12 +332,14 @@ int msm_camera_flash_external(
 	struct msm_camera_sensor_flash_external *external,
 	unsigned led_state)
 {
-	int rc = 0;
+	int rc = -EFAULT;
 
 	switch (led_state) {
 
 	case MSM_CAMERA_LED_INIT:
-		if (external->flash_id == MSM_CAMERA_EXT_LED_FLASH_SC628A) {
+		switch (external->flash_id) {
+#ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
+		case MSM_CAMERA_EXT_LED_FLASH_SC628A:
 			if (!sc628a_client) {
 				rc = i2c_add_driver(&sc628a_i2c_driver);
 				if (rc < 0 || sc628a_client == NULL) {
@@ -334,8 +348,10 @@ int msm_camera_flash_external(
 					return rc;
 				}
 			}
-		} else if (external->flash_id ==
-			MSM_CAMERA_EXT_LED_FLASH_TPS61310) {
+			break;
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
+		case MSM_CAMERA_EXT_LED_FLASH_TPS61310:
 			if (!tps61310_client) {
 				rc = i2c_add_driver(&tps61310_i2c_driver);
 				if (rc < 0 || tps61310_client == NULL) {
@@ -344,8 +360,10 @@ int msm_camera_flash_external(
 					return rc;
 				}
 			}
-		} else if (external->flash_id ==
-			MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
+			break;
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_ADP1650
+		case MSM_CAMERA_EXT_LED_FLASH_ADP1650:
 			rc = adp1650_ext_init();
 			if (rc < 0) {
 				pr_err("adp1650 driver add failed\n");
@@ -355,11 +373,13 @@ int msm_camera_flash_external(
 				led_trigger_register_simple("msm_cam_flash",
 							&ledtrig_flash);
 			}
-		} else {
+			break;
+#endif
+		default:
 			pr_err("Flash id not supported\n");
 			rc = -ENOTSUPP;
 			return rc;
-		}
+		} // End of switch(external->flash_id)
 
 #if defined(CONFIG_GPIO_SX150X) || defined(CONFIG_GPIO_SX150X_MODULE)
 		if (external->expander_info && !sx150x_client) {
@@ -371,14 +391,18 @@ int msm_camera_flash_external(
 			if (!sx150x_client || !adapter) {
 				pr_err("sx150x_client is not available\n");
 				rc = -ENOTSUPP;
+#ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
 				if (sc628a_client) {
 					i2c_del_driver(&sc628a_i2c_driver);
 					sc628a_client = NULL;
 				}
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
 				if (tps61310_client) {
 					i2c_del_driver(&tps61310_i2c_driver);
 					tps61310_client = NULL;
 				}
+#endif
 				return rc;
 			}
 			i2c_put_adapter(adapter);
@@ -386,11 +410,15 @@ int msm_camera_flash_external(
 #endif
 
 		if (gpio_is_valid(external->led_en)) {
+			rc = -EINVAL;
+#ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
 			if (sc628a_client)
 				rc = gpio_request(external->led_en, "sc628a");
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
 			if (tps61310_client)
 				rc = gpio_request(external->led_en, "tps61310");
-
+#endif
 			if (!rc) {
 				gpio_direction_output(external->led_en, 0);
 			} else {
@@ -398,11 +426,15 @@ int msm_camera_flash_external(
 			}
 		}
 		if (gpio_is_valid(external->led_flash_en)) {
+			rc = -EINVAL;
+#ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
 			if (sc628a_client)
 				rc = gpio_request(external->led_flash_en, "sc628a");
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
 			if (tps61310_client)
 				rc = gpio_request(external->led_flash_en, "tps61310");
-
+#endif
 			if (!rc) {
 				gpio_direction_output(external->led_flash_en, 0);
 			} else {
@@ -416,35 +448,41 @@ error_led_flash_en:
 		gpio_free(external->led_en);
 error_led_en:
 		pr_err("%s gpio request failed\n", __func__);
+#ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
 		if (sc628a_client) {
 			i2c_del_driver(&sc628a_i2c_driver);
 			sc628a_client = NULL;
 		}
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
 		if (tps61310_client) {
 			i2c_del_driver(&tps61310_i2c_driver);
 			tps61310_client = NULL;
 		}
+#endif
 		break;
 
 	case MSM_CAMERA_LED_RELEASE:
-		if (sc628a_client || tps61310_client) {
-			if (gpio_is_valid(external->led_en)) {
-				gpio_set_value_cansleep(external->led_en, 0);
-				gpio_free(external->led_en);
-			}
-			if (gpio_is_valid(external->led_flash_en)) {
-				gpio_set_value_cansleep(external->led_flash_en, 0);
-				gpio_free(external->led_flash_en);
-			}
-			if (sc628a_client) {
-				i2c_del_driver(&sc628a_i2c_driver);
-				sc628a_client = NULL;
-			}
-			if (tps61310_client) {
-				i2c_del_driver(&tps61310_i2c_driver);
-				tps61310_client = NULL;
-			}
+		if (gpio_is_valid(external->led_en)) {
+			gpio_set_value_cansleep(external->led_en, 0);
+			gpio_free(external->led_en);
 		}
+		if (gpio_is_valid(external->led_flash_en)) {
+			gpio_set_value_cansleep(external->led_flash_en, 0);
+			gpio_free(external->led_flash_en);
+		}
+#ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
+		if (sc628a_client) {
+			i2c_del_driver(&sc628a_i2c_driver);
+			sc628a_client = NULL;
+		}
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
+		if (tps61310_client) {
+			i2c_del_driver(&tps61310_i2c_driver);
+			tps61310_client = NULL;
+		}
+#endif
 
 #if defined(CONFIG_GPIO_SX150X) || defined(CONFIG_GPIO_SX150X_MODULE)
 		if (external->expander_info && sx150x_client) {
@@ -452,23 +490,29 @@ error_led_en:
 			sx150x_client = NULL;
 		}
 #endif
-
+#ifdef CONFIG_MSM_CAMERA_FLASH_ADP1650
 		if (external->flash_id ==
 			MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			adp1650_ext_exit();
 			led_trigger_unregister_simple(ledtrig_flash);
 		}
+#endif
 		break;
 
 	case MSM_CAMERA_LED_OFF:
+#ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
 		if (sc628a_client)
 			rc = flash_i2c_write_b(sc628a_client, 0x02, 0x00);
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
 		if (tps61310_client)
 			rc = flash_i2c_write_b(tps61310_client, 0x01, 0x00);
-		if (external->flash_id ==
-			MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_ADP1650
+		if (external->flash_id == MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			led_trigger_event(ledtrig_flash, 0);
 		}
+#endif
 		if (gpio_is_valid(external->led_en))
 			gpio_set_value_cansleep(external->led_en, 0);
 		if (gpio_is_valid(external->led_flash_en))
@@ -476,37 +520,47 @@ error_led_en:
 		break;
 
 	case MSM_CAMERA_LED_LOW:
-		if (external->flash_id ==
-		MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
+#ifdef CONFIG_MSM_CAMERA_FLASH_ADP1650
+		if (external->flash_id == MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			led_trigger_event(ledtrig_flash, 1);
 		}
+#endif
 		if (gpio_is_valid(external->led_en))
 			gpio_set_value_cansleep(external->led_en, 1);
 		if (gpio_is_valid(external->led_flash_en))
 			gpio_set_value_cansleep(external->led_flash_en, 1);
 
 		usleep_range(2000, 3000);
+#ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
 		if (sc628a_client)
 			rc = flash_i2c_write_b(sc628a_client, 0x02, 0x06);
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
 		if (tps61310_client)
 			rc = flash_i2c_write_b(tps61310_client, 0x01, 0x86);
+#endif
 		break;
 
 	case MSM_CAMERA_LED_HIGH:
-		if (external->flash_id ==
-		MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
+#ifdef CONFIG_MSM_CAMERA_FLASH_ADP1650
+		if (external->flash_id == MSM_CAMERA_EXT_LED_FLASH_ADP1650) {
 			led_trigger_event(ledtrig_flash, 2);
 		}
+#endif
 		if (gpio_is_valid(external->led_en))
 			gpio_set_value_cansleep(external->led_en, 1);
 		if (gpio_is_valid(external->led_flash_en))
 			gpio_set_value_cansleep(external->led_flash_en, 1);
 
 		usleep_range(2000, 3000);
+#ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
 		if (sc628a_client)
 			rc = flash_i2c_write_b(sc628a_client, 0x02, 0x49);
+#endif
+#ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
 		if (tps61310_client)
 			rc = flash_i2c_write_b(tps61310_client, 0x01, 0x8B);
+#endif
 		break;
 
 	default:
@@ -783,6 +837,7 @@ int msm_strobe_flash_ctrl(struct msm_camera_sensor_strobe_flash_data *sfdata,
 	struct strobe_flash_ctrl_data *strobe_ctrl)
 {
 	int rc = 0;
+
 	switch (strobe_ctrl->type) {
 	case STROBE_FLASH_CTRL_INIT:
 		if (!sfdata)

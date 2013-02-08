@@ -85,7 +85,11 @@
 #include <linux/mfd/wcd9xxx/core.h>
 #include <linux/mfd/wcd9xxx/pdata.h>
 #endif
-
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+#include <linux/sensor/l3gd20_gyro.h>
+#include <linux/sensor/lps331ap.h>
+#include <linux/sensor/lsm303dlhc.h>
+#endif
 #include <linux/smsc3503.h>
 #include <linux/ion.h>
 #include <mach/ion.h>
@@ -3005,6 +3009,82 @@ static struct i2c_board_info liquid_io_expander_i2c_info[] __initdata = {
 	},
 };
 
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+#define GYRO_INT_N_GPIO		(69)
+#define GYRO_DRDY_GPIO		(38)
+static struct l3gd20_gyro_platform_data l3gd20_gyro_platform_data = {
+	.gpio_int1 = GYRO_INT_N_GPIO,
+	.gpio_DRDY = GYRO_DRDY_GPIO,
+	.negate_x  = 1,
+	.negate_y  = 1,
+	.negate_z  = 1,
+};
+
+static struct i2c_board_info l3gd20_gyro_device_info[] __initdata = {
+	{
+		I2C_BOARD_INFO(L3GD20_GYRO_DEV_NAME, 0x6b),
+		.platform_data = &l3gd20_gyro_platform_data,
+		.irq = MSM_GPIO_TO_INT(GYRO_DRDY_GPIO),
+	},
+};
+
+#define LPS331AP_PRESSURE_INT1	(70)
+#define LPS331AP_PRESSURE_INT2	(48)
+static struct lps331ap_platform_data lps331_platform_data = {
+	.gpio_int1 = LPS331AP_PRESSURE_INT1,
+	.gpio_int2 = LPS331AP_PRESSURE_INT2,
+};
+
+static struct i2c_board_info lps331_device_info[] __initdata = {
+	{
+		I2C_BOARD_INFO( LPS331AP_PRS_DEV_NAME, 0x5d),
+		.platform_data = &lps331_platform_data,
+		.irq = MSM_GPIO_TO_INT(LPS331AP_PRESSURE_INT1),
+	},
+};
+
+static struct lsm303dlhc_platform_data lsm303dlhc_platform_data = {
+
+	.axis_map_x = 0,
+	.axis_map_y = 1,
+	.axis_map_z = 2,
+	.negative_x = 0,
+	.negative_y = 0,
+	.negative_z = 0,
+	.irq_a1 = 10,
+	.irq_a2 = 67,
+	.irq_m = 49,
+};
+
+#define LSM303DLHC_ACC_INT1	(10)
+#define LSM303DLHC_ACC_INT2	(67)
+struct lsm303dlhc_acc_platform_data lsm303dlhc_acc_platform_data = {
+	.axis_map_x = 0,
+	.axis_map_y = 1,
+	.axis_map_z = 2,
+	.negate_x = 0,
+	.negate_y = 0,
+	.negate_z = 0,
+	.gpio_int1 = LSM303DLHC_ACC_INT1,
+	.gpio_int2 = LSM303DLHC_ACC_INT2,
+};
+
+static struct i2c_board_info lsm303dlhc_acc_device_info[] __initdata = {
+	{
+		I2C_BOARD_INFO( LSM303DLHC_ACC_DEV_NAME, 0x19),
+		.platform_data = &lsm303dlhc_acc_platform_data,
+		.irq = MSM_GPIO_TO_INT(LSM303DLHC_ACC_INT2),
+	},
+};
+#define LSM303DLHC_MAGNETIC_DRDY	(49)
+static struct i2c_board_info lsm303dlhc_mag_device_info[] __initdata = {
+	{
+		I2C_BOARD_INFO(LSM303DHLC_MAG_DEV_NAME, 0x1e),
+		.platform_data = &lsm303dlhc_platform_data,
+		.irq = MSM_GPIO_TO_INT(LSM303DLHC_MAGNETIC_DRDY),
+	},
+};
+#endif
 static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 #ifdef CONFIG_ISL9519_CHARGER
 	{
@@ -3050,6 +3130,36 @@ static struct i2c_registry msm8960_i2c_devices[] __initdata = {
 		MSM_8960_GSBI3_QUP_I2C_BUS_ID,
 		sitronix_info,
 		ARRAY_SIZE(sitronix_info),
+	},
+#endif
+#ifdef CONFIG_MACH_APQ8060A_DRAGON
+	/* L3GD20 ST Micro 3-axis gyro sensor */
+	{
+		I2C_LIQUID | I2C_SURF | I2C_DRAGON,
+		MSM_8960_GSBI12_QUP_I2C_BUS_ID,
+		l3gd20_gyro_device_info,
+		ARRAY_SIZE(l3gd20_gyro_device_info),
+	},
+	/* LPS331 ST Micro pressure sensor */
+	{
+		I2C_LIQUID | I2C_DRAGON,
+		MSM_8960_GSBI12_QUP_I2C_BUS_ID,
+		lps331_device_info,
+		ARRAY_SIZE(lps331_device_info),
+	},
+	/* LSM303DLHC ST Micro Accelerometer */
+	{
+		I2C_LIQUID | I2C_DRAGON,
+		MSM_8960_GSBI12_QUP_I2C_BUS_ID,
+		lsm303dlhc_acc_device_info,
+		ARRAY_SIZE(lsm303dlhc_acc_device_info),
+	},
+	/* LSM303DLHC ST Micro Magnetometer */
+	{
+		I2C_LIQUID | I2C_DRAGON,
+		MSM_8960_GSBI12_QUP_I2C_BUS_ID,
+		lsm303dlhc_mag_device_info,
+		ARRAY_SIZE(lsm303dlhc_mag_device_info),
 	},
 #endif
 

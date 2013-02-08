@@ -108,7 +108,7 @@ static struct pm8xxx_gpio_init pm8921_gpios[] __initdata = {
 	PM8XXX_GPIO_INPUT(26,	    PM_GPIO_PULL_UP_30), /* SD_CARD_DET_N */
 	PM8XXX_GPIO_OUTPUT(43, 1),                       /* DISP_RESET_N */
 	PM8XXX_GPIO_OUTPUT(42, 0),                      /* USB 5V reg enable */
-	PM8XXX_GPIO_OUTPUT(24, 0),                      /* Backlight OFF */
+	PM8XXX_GPIO_OUTPUT(24, 1),                      /* Backlight OFF */
 	/* TABLA CODEC RESET */
 	PM8XXX_GPIO_OUTPUT_STRENGTH(34, 1, PM_GPIO_STRENGTH_MED)
 };
@@ -248,8 +248,8 @@ static struct pm8xxx_keypad_platform_data keypad_data_liquid = {
 
 
 static const unsigned int keymap[] = {
-	KEY(0, 0, KEY_VOLUMEUP),
-	KEY(0, 1, KEY_VOLUMEDOWN),
+	KEY(0, 0, KEY_VOLUMEDOWN),
+	KEY(0, 1, KEY_VOLUMEUP),
 	KEY(0, 2, KEY_CAMERA_SNAPSHOT),
 	KEY(0, 3, KEY_CAMERA_FOCUS),
 };

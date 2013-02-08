@@ -861,21 +861,18 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 	case FB_BLANK_NORMAL:
 	case FB_BLANK_POWERDOWN:
 	default:
-		if (mfd->panel_power_on) {
-			int curr_pwr_state;
-
-			mfd->op_enable = FALSE;
-			curr_pwr_state = mfd->panel_power_on;
-			mfd->panel_power_on = FALSE;
-			bl_updated = 0;
-
-			msleep(16);
-			ret = pdata->off(mfd->pdev);
-			if (ret)
-				mfd->panel_power_on = curr_pwr_state;
-
-			mfd->op_enable = TRUE;
-		}
+		/* Blanking is intentionally broken as a *temporary*
+		   workaround to make this driver minimally cooperate with
+		   xorg's fbdevhw. This driver doesn't fully set up the
+		   hardware until the framebuffer is "flipped," i.e. when
+		   the display is panned to a new window within the virtual
+		   framebuffer for double-buffering purposes. fbdevhw does
+		   flip the display to the origin during its startup, but
+		   does so while the display is blanked, which has no effect
+		   because of the way this driver is structured. This
+		   workaround simply makes sure the display can never
+		   be blanked. This also breaks backlight control, power
+		   management, etc. */
 		break;
 	}
 

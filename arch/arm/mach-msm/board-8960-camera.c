@@ -902,7 +902,7 @@ static struct i2c_board_info msm8960_camera_i2c_boardinfo[] = {
 	},
 #ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
 	{
-	I2C_BOARD_INFO("sc628a", 0x6E),
+	I2C_BOARD_INFO("sc628a", (0x6E >> 1)),
 	},
 #endif
 	{

@@ -437,7 +437,7 @@ static struct i2c_board_info i2c_camera_devices[] = {
 		.platform_data = &msm_camera_sensor_ov8825_data,
 	},
 	{
-		I2C_BOARD_INFO("sc628a", 0x6E),
+		I2C_BOARD_INFO("sc628a", (0x6E >> 1)),
 	},
 };
 #else
@@ -947,7 +947,7 @@ static struct i2c_board_info i2c_camera_devices[] = {
 	},
 	#endif
 	{
-		I2C_BOARD_INFO("sc628a", 0x6E),
+		I2C_BOARD_INFO("sc628a", (0x6E >> 1)),
 	},
 };
 

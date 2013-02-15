@@ -35,25 +35,6 @@ enum msm_cam_flash_stat{
 };
 
 #if defined(CONFIG_MSM_CAMERA_FLASH_SC628A) || defined(CONFIG_MSM_CAMERA_FLASH_TPS61310)
-static int32_t flash_i2c_txdata(struct i2c_client *client,
-		unsigned char *txdata, int length)
-{
-	struct i2c_msg msg[] = {
-		{
-			.addr = client->addr >> 1,
-			.flags = 0,
-			.len = length,
-			.buf = txdata,
-		},
-	};
-	if (i2c_transfer(client->adapter, msg, 1) < 0) {
-		CDBG("flash_i2c_txdata faild 0x%x\n", client->addr >> 1);
-		return -EIO;
-	}
-
-	return 0;
-}
-
 static int32_t flash_i2c_write_b(struct i2c_client *client,
 	uint8_t baddr, uint8_t bdata)
 {
@@ -66,7 +47,7 @@ static int32_t flash_i2c_write_b(struct i2c_client *client,
 	buf[0] = baddr;
 	buf[1] = bdata;
 
-	rc = flash_i2c_txdata(client, buf, 2);
+	rc = i2c_master_send(client, buf, 2);
 	if (rc < 0) {
 		CDBG("i2c_write_b failed, addr = 0x%x, val = 0x%x!\n",
 				baddr, bdata);

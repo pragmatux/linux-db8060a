@@ -670,7 +670,7 @@ static struct i2c_board_info apq8064_camera_i2c_boardinfo[] = {
 	.platform_data = &msm_camera_sensor_ov2720_data,
 	},
 	{
-	I2C_BOARD_INFO("sc628a", 0x6E),
+	I2C_BOARD_INFO("sc628a", (0x6E >> 1)),
 	},
 	{
 	I2C_BOARD_INFO("imx091", 0x34),

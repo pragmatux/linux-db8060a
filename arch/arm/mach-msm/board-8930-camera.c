@@ -618,7 +618,7 @@ struct i2c_board_info msm8930_camera_i2c_boardinfo[] = {
 	},
 #ifdef CONFIG_MSM_CAMERA_FLASH_TPS61310
 	{
-	I2C_BOARD_INFO("tps61310", 0x66),
+	I2C_BOARD_INFO("tps61310", (0x66 >> 1)),
 	},
 #endif
 };

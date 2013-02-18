@@ -287,9 +287,6 @@ static int __devinit adp1650_probe(struct i2c_client *client,
 	chip->cdev.brightness = FL_MODE_OFF;
 	chip->cdev.brightness_set = adp1650_brightness_set;
 
-	if (chip->pdata->triggername != NULL)
-		chip->cdev.default_trigger = chip->pdata->triggername;
-
 	ret = led_classdev_register(&client->dev, &chip->cdev);
 	if (ret < 0) {
 		dev_err(&client->dev, "failed to register led");
@@ -385,17 +382,19 @@ static struct i2c_driver adp1650_driver = {
 	.remove = __devexit_p(adp1650_remove),
 	.id_table = adp1650_id,
 };
-int adp1650_ext_init(void)
+
+static int __init adp1650_init(void)
 {
 	return i2c_add_driver(&adp1650_driver);
 }
-EXPORT_SYMBOL(adp1650_ext_init);
+module_init(adp1650_init);
 
-void adp1650_ext_exit(void)
+static void __exit adp1650_exit(void)
 {
 	i2c_del_driver(&adp1650_driver);
 }
-EXPORT_SYMBOL(adp1650_ext_exit);
+module_exit(adp1650_exit);
+
 MODULE_AUTHOR("Michael Hennerich <michael.hennerich@analog.com>");
 MODULE_DESCRIPTION("ADP1650 LED Flash Driver");
 MODULE_LICENSE("GPL v2");

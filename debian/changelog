@@ -1,3 +1,16 @@
+linux-db8060a (3.0.21-12374-gcae2925-2) unstable; urgency=low
+
+  [ Ryan Kuester ]
+  * msm_fb: break blanking as workaround for xorg [hack]
+  * msm_fb: fix color field offsets for 32-bit pixels
+
+  [ Merge in Intrinsyc BSP v1.2 ]
+  * Remove DSPS
+  * Swap audio volume keys
+  * Add drivers for gyro, pressure, accelerometer, and magnetometer
+
+ -- Ryan Kuester <rkuester@insymbols.com>  Tue, 19 Feb 2013 00:51:17 +0000
+
 linux-db8060a (3.0.21-12374-gcae2925-1) unstable; urgency=low
 
   * Initial release.

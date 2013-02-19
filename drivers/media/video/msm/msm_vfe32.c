@@ -3947,16 +3947,22 @@ static long msm_vfe_subdev_ioctl(struct v4l2_subdev *sd,
 	struct msm_cam_media_controller *pmctl =
 		(struct msm_cam_media_controller *)v4l2_get_subdev_hostdata(sd);
 	struct msm_isp_cmd vfecmd;
-	struct msm_camvfe_params *vfe_params =
-		(struct msm_camvfe_params *)arg;
-	struct msm_vfe_cfg_cmd *cmd = vfe_params->vfe_cfg;
-	void *data = vfe_params->data;
-
+	struct msm_camvfe_params vfe_params;
+	struct msm_vfe_cfg_cmd *cmd;
+	void *data;
 	long rc = 0;
 	uint32_t i = 0;
 	struct vfe_cmd_stats_buf *scfg = NULL;
 	struct msm_pmem_region   *regptr = NULL;
 	struct vfe_cmd_stats_ack *sack = NULL;
+
+	if (!arg)
+		return -ENOTTY;
+	else if (copy_from_user(&vfe_params, arg, sizeof(vfe_params)))
+		return -EFAULT;
+	cmd = vfe_params.vfe_cfg;
+	data = vfe_params.data;
+
 	if (cmd->cmd_type == CMD_VFE_PROCESS_IRQ) {
 		vfe32_process_irq((uint32_t) data);
 		return rc;

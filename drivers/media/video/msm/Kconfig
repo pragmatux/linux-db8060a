@@ -188,7 +188,7 @@ config MSM_CAMERA_FLASH_TPS61310
 
 config MSM_CAMERA_FLASH_ADP1650
 	bool "Qualcomm MSM camera adp1650 flash support"
-	depends on MSM_CAMERA && LEDS_ADP1650
+	depends on MSM_CAMERA
 	default n
 	---help---
 	  Enable support for LED flash for msm camera.

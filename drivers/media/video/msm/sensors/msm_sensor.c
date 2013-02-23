@@ -393,11 +393,14 @@ int32_t msm_sensor_release(struct msm_sensor_ctrl_t *s_ctrl)
 	CDBG("%s called\n", __func__);
 	s_ctrl->func_tbl->sensor_stop_stream(s_ctrl);
 	if (s_ctrl->curr_res != MSM_SENSOR_INVALID_RES) {
-		fps = s_ctrl->msm_sensor_reg->
-			output_settings[s_ctrl->curr_res].vt_pixel_clk /
-			s_ctrl->curr_frame_length_lines /
-			s_ctrl->curr_line_length_pclk;
-		delay = 1000 / fps;
+		if (s_ctrl->curr_frame_length_lines &&
+		    s_ctrl->curr_line_length_pclk)
+			fps = s_ctrl->msm_sensor_reg->
+				output_settings[s_ctrl->curr_res].vt_pixel_clk /
+				s_ctrl->curr_frame_length_lines /
+				s_ctrl->curr_line_length_pclk;
+		if (fps)
+			delay = 1000 / fps;
 		CDBG("%s fps = %ld, delay = %d\n", __func__, fps, delay);
 		msleep(delay);
 	}

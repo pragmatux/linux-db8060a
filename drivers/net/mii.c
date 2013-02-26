@@ -32,11 +32,6 @@
 #include <linux/netdevice.h>
 #include <linux/ethtool.h>
 #include <linux/mdio.h>
-#include <linux/rtnetlink.h>
-struct net_pm_task {
-	struct net_device *net;
-	struct work_struct task;
-} net_pm_task;
 
 static u32 mii_get_an(struct mii_if_info *mii, u16 addr)
 {
@@ -335,18 +330,6 @@ void mii_check_link (struct mii_if_info *mii)
 		netif_carrier_off(mii->dev);
 }
 
-
-static void net_pm_job(struct work_struct *taskp)
-{
-	struct net_pm_task *net_pm =
-		container_of(taskp, struct net_pm_task, task);
-	rtnl_lock();
-	if (dev_change_flags(net_pm->net,
-			net_pm->net->flags & (~IFF_UP)) < 0)
-		printk(KERN_ERR " IP-Config: Failed to down net %s\n",
-						net_pm->net->name);
-	rtnl_unlock();
-}
 /**
  * mii_check_media - check the MII interface for a duplex change
  * @mii: the MII interface
@@ -383,9 +366,6 @@ unsigned int mii_check_media (struct mii_if_info *mii,
 		netif_carrier_off(mii->dev);
 		if (ok_to_print)
 			netdev_info(mii->dev, "link down\n");
-		net_pm_task.net = mii->dev;
-		INIT_WORK(&net_pm_task.task, net_pm_job);
-		schedule_work(&net_pm_task.task);
 		return 0; /* duplex did not change */
 	}
 

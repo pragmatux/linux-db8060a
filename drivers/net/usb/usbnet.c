@@ -47,6 +47,7 @@
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/pm_runtime.h>
+
 #define DRIVER_VERSION		"22-Aug-2005"
 
 
@@ -94,11 +95,6 @@ static DECLARE_WAIT_QUEUE_HEAD(unlink_wakeup);
 static int msg_level = -1;
 module_param (msg_level, int, 0);
 MODULE_PARM_DESC (msg_level, "Override default message level");
-
-struct net_link_check {
-	struct mii_if_info *mii;
-	struct delayed_work task;
-} net_link_check;
 
 /*-------------------------------------------------------------------------*/
 
@@ -702,13 +698,6 @@ int usbnet_stop (struct net_device *net)
 }
 EXPORT_SYMBOL_GPL(usbnet_stop);
 
-static void net_link_check_work(struct work_struct *taskp)
-{
-	struct net_link_check *net_link =
-			container_of((struct delayed_work *)taskp,
-					struct net_link_check, task);
-		mii_check_media(net_link->mii, 1, 1);
-}
 /*-------------------------------------------------------------------------*/
 
 // posts reads, and enables write queuing
@@ -720,6 +709,7 @@ int usbnet_open (struct net_device *net)
 	struct usbnet		*dev = netdev_priv(net);
 	int			retval;
 	struct driver_info	*info = dev->driver_info;
+
 	if ((retval = usb_autopm_get_interface(dev->intf)) < 0) {
 		netif_info(dev, ifup, dev->net,
 			   "resumption fail (%d) usbnet usb-%s-%s, %s\n",
@@ -778,10 +768,8 @@ int usbnet_open (struct net_device *net)
 			goto done;
 		usb_autopm_put_interface(dev->intf);
 	}
-	INIT_DELAYED_WORK(&net_link_check.task, net_link_check_work);
-	net_link_check.mii = &dev->mii;
-	schedule_delayed_work(&net_link_check.task, 10*HZ);
 	return retval;
+
 done:
 	usb_autopm_put_interface(dev->intf);
 done_nopm:

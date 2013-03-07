@@ -1,3 +1,15 @@
+linux-db8060a (3.0.21-12374-gcae2925-4) unstable; urgency=low
+
+  [ Bill Gatliff ]
+  * msm_sensor: don't divide by zero in msm_sensor_release()
+
+  [ Ryan Kuester ]
+  * msm_vfe: don't assume ioctl arguments are valid
+  * msm8960-perf_defconfig: configure out wfd video driver
+  * msm8960-perf_defconfig: configure in DEVTMPFS and AUTOFS4 for systemd
+
+ -- Ryan Kuester <rkuester@insymbols.com>  Thu, 07 Mar 2013 02:25:13 +0000
+
 linux-db8060a (3.0.21-12374-gcae2925-3) unstable; urgency=low
 
   [ Ryan Kuester ]

@@ -110,7 +110,13 @@ static struct pm8xxx_gpio_init pm8921_gpios[] __initdata = {
 	PM8XXX_GPIO_OUTPUT(42, 0),                      /* USB 5V reg enable */
 	PM8XXX_GPIO_OUTPUT(24, 1),                      /* Backlight OFF */
 	/* TABLA CODEC RESET */
-	PM8XXX_GPIO_OUTPUT_STRENGTH(34, 1, PM_GPIO_STRENGTH_MED)
+	PM8XXX_GPIO_OUTPUT_STRENGTH(34, 1, PM_GPIO_STRENGTH_MED),
+
+	PM8XXX_GPIO_INIT(36, PM_GPIO_DIR_OUT, PM_GPIO_OUT_BUF_CMOS, 0, \
+			PM_GPIO_PULL_NO, PM_GPIO_VIN_L3, \
+			PM_GPIO_STRENGTH_HIGH, \
+			PM_GPIO_FUNC_NORMAL, 0, 0)
+
 };
 
 /* Initial PM8921 MPP configurations */

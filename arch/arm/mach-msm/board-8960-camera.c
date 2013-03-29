@@ -197,7 +197,7 @@ static struct msm_camera_sensor_flash_src msm_flash_src = {
 	.flash_sr_type = MSM_CAMERA_FLASH_SRC_EXT,
 	._fsrc.ext_driver_src.led_en = VFE_CAMIF_TIMER1_GPIO,
 	._fsrc.ext_driver_src.led_flash_en = VFE_CAMIF_TIMER2_GPIO,
-	._fsrc.ext_driver_src.flash_id = MAM_CAMERA_EXT_LED_FLASH_SC628A,
+	._fsrc.ext_driver_src.flash_id = MSM_CAMERA_EXT_LED_FLASH_SC628A,
 };
 #endif
 
@@ -704,6 +704,14 @@ static struct msm_actuator_info s5k3h2_actuator_info = {
 	.vcm_enable     = 1,
 };
 
+#define ADP1650_FLASH_NOW_GPIO	(3)		/* Connected, but not used */
+#define ADP1650_FLASH_CNTL_EN1_GPIO (2)
+static struct msm_camera_sensor_flash_src msm_flash_adp1650_src = {
+	.flash_sr_type				= MSM_CAMERA_FLASH_SRC_EXT,
+	._fsrc.ext_driver_src.led_en		= ADP1650_FLASH_CNTL_EN1_GPIO,
+	._fsrc.ext_driver_src.led_flash_en	= -1,	/* Invalid GPIO being ignored */
+	._fsrc.ext_driver_src.flash_id		= MSM_CAMERA_EXT_LED_FLASH_ADP1650,
+};
 static struct camera_vreg_t msm_8960_s5k3h2_vreg[] = {
 	{"cam_vdig", REG_LDO, 1200000, 1200000, 105000},
 	{"cam_vana", REG_LDO, 2800000, 2850000, 85600},
@@ -712,7 +720,10 @@ static struct camera_vreg_t msm_8960_s5k3h2_vreg[] = {
 };
 
 static struct msm_camera_sensor_flash_data flash_s5k3h2 = {
-	.flash_type     = MSM_CAMERA_FLASH_NONE,
+	.flash_type     = MSM_CAMERA_FLASH_LED,
+#ifdef CONFIG_MSM_CAMERA_FLASH
+	.flash_src	= &msm_flash_adp1650_src
+#endif
 };
 
 static struct msm_camera_csi_lane_params s5k3h2_csi_lane_params = {
@@ -720,11 +731,16 @@ static struct msm_camera_csi_lane_params s5k3h2_csi_lane_params = {
 	.csi_lane_mask = 0x3,
 };
 
+static struct msm_camera_i2c_conf apq8060a_cam_i2c_conf = {
+	.use_i2c_mux = 0,
+};
+
 static struct msm_camera_sensor_platform_info sensor_board_info_s5k3h2 = {
 	.mount_angle    = 0,
 	.cam_vreg = msm_8960_s5k3h2_vreg,
 	.num_vreg = ARRAY_SIZE(msm_8960_s5k3h2_vreg),
 	.gpio_conf = &msm_8960_back_cam_gpio_conf,
+	.i2c_conf  = &apq8060a_cam_i2c_conf,
 	.csi_lane_params = &s5k3h2_csi_lane_params,
 };
 
@@ -737,7 +753,8 @@ static struct msm_camera_sensor_info msm_camera_sensor_s5k3h2_data = {
 	.camera_type = BACK_CAMERA_2D,
 	.actuator_info = &s5k3h2_actuator_info,
 };
-#endif
+#endif	/* CONFIG_MACH_APQ8060A_DRAGON */
+
 static struct pm8xxx_mpp_config_data privacy_light_on_config = {
 	.type		= PM8XXX_MPP_TYPE_SINK,
 	.level		= PM8XXX_MPP_CS_OUT_5MA,
@@ -833,7 +850,7 @@ static struct i2c_board_info msm8960_camera_i2c_boardinfo[] = {
 	},
 #ifdef CONFIG_MSM_CAMERA_FLASH_SC628A
 	{
-	I2C_BOARD_INFO("sc628a", 0x6E),
+	I2C_BOARD_INFO("sc628a", (0x6E >> 1)),
 	},
 #endif
 	{
@@ -845,6 +862,11 @@ static struct i2c_board_info msm8960_camera_i2c_boardinfo[] = {
 	I2C_BOARD_INFO("s5k3h2", 0x10),
 	.platform_data = &msm_camera_sensor_s5k3h2_data,
 	},
+#ifdef CONFIG_MSM_CAMERA_FLASH_ADP1650
+	{
+	I2C_BOARD_INFO("adp1650", (0x60 >> 1)),
+	},
+#endif
 #endif
 };
 

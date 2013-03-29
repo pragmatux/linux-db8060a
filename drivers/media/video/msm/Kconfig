@@ -186,6 +186,17 @@ config MSM_CAMERA_FLASH_TPS61310
 	  It is a Texas Instruments multiple LED Flash
 	  for camera flash and video light applications.
 
+config MSM_CAMERA_FLASH_ADP1650
+	bool "Qualcomm MSM camera adp1650 flash support"
+	depends on MSM_CAMERA
+	default n
+	---help---
+	  Enable support for LED flash for msm camera.
+	  It is a Analog Devices single white LED Flash driver
+	  with programmable current and timer, and safety
+	  protection.
+	  The I2C chip address is 0x30 (0x60/W, 0x61/R).
+
 config IMX072
 	bool "Sensor imx072 (Sony 5M)"
 	default n

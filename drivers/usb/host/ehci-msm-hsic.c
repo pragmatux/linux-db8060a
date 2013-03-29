@@ -709,9 +709,11 @@ static int msm_hsic_suspend(struct msm_hsic_hcd *mehci)
 	atomic_set(&mehci->in_lpm, 1);
 	enable_irq(hcd->irq);
 
-	mehci->wakeup_irq_enabled = 1;
-	enable_irq_wake(mehci->wakeup_irq);
-	enable_irq(mehci->wakeup_irq);
+	if (mehci->wakeup_irq) {
+		mehci->wakeup_irq_enabled = 1;
+		enable_irq_wake(mehci->wakeup_irq);
+		enable_irq(mehci->wakeup_irq);
+	}
 
 	wake_unlock(&mehci->wlock);
 
@@ -732,7 +734,7 @@ static int msm_hsic_resume(struct msm_hsic_hcd *mehci)
 		return 0;
 	}
 
-	if (mehci->wakeup_irq_enabled) {
+	if (mehci->wakeup_irq_enabled && mehci->wakeup_irq) {
 		disable_irq_wake(mehci->wakeup_irq);
 		disable_irq_nosync(mehci->wakeup_irq);
 		mehci->wakeup_irq_enabled = 0;

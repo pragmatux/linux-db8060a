@@ -188,7 +188,7 @@ static struct msm_camera_sensor_flash_src msm_flash_src = {
 	.flash_sr_type = MSM_CAMERA_FLASH_SRC_EXT,
 	._fsrc.ext_driver_src.led_en = VFE_CAMIF_TIMER1_GPIO,
 	._fsrc.ext_driver_src.led_flash_en = VFE_CAMIF_TIMER2_GPIO,
-	._fsrc.ext_driver_src.flash_id = MAM_CAMERA_EXT_LED_FLASH_SC628A,
+	._fsrc.ext_driver_src.flash_id = MSM_CAMERA_EXT_LED_FLASH_SC628A,
 };
 
 static struct msm_gpiomux_config apq8064_cam_2d_configs[] = {
@@ -670,7 +670,7 @@ static struct i2c_board_info apq8064_camera_i2c_boardinfo[] = {
 	.platform_data = &msm_camera_sensor_ov2720_data,
 	},
 	{
-	I2C_BOARD_INFO("sc628a", 0x6E),
+	I2C_BOARD_INFO("sc628a", (0x6E >> 1)),
 	},
 	{
 	I2C_BOARD_INFO("imx091", 0x34),

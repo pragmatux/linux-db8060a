@@ -106,7 +106,7 @@ static int __init mipi_video_wintek_wvga_init(void)
 	pinfo.lcdc.border_clr = 0;	/* blk */
 	pinfo.lcdc.underflow_clr = 0xff;	/* blue */
 	pinfo.lcdc.hsync_skew = 0;
-	pinfo.bl_max = CONFIG_FB_MSM_MIPI_WINTEK_VIDEO_WVGA_BL_LEVELS;
+	pinfo.bl_max = WINTEK_VIDEO_WVGA_BL_LEVELS;
 	pinfo.bl_min = 1;
 	pinfo.fb_num = 2;
 

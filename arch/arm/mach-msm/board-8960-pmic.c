@@ -110,7 +110,13 @@ static struct pm8xxx_gpio_init pm8921_gpios[] __initdata = {
 	PM8XXX_GPIO_OUTPUT(42, 0),                      /* USB 5V reg enable */
 	PM8XXX_GPIO_OUTPUT(24, 1),                      /* Backlight OFF */
 	/* TABLA CODEC RESET */
-	PM8XXX_GPIO_OUTPUT_STRENGTH(34, 1, PM_GPIO_STRENGTH_MED)
+	PM8XXX_GPIO_OUTPUT_STRENGTH(34, 1, PM_GPIO_STRENGTH_MED),
+
+	PM8XXX_GPIO_INIT(36, PM_GPIO_DIR_OUT, PM_GPIO_OUT_BUF_CMOS, 0, \
+			PM_GPIO_PULL_NO, PM_GPIO_VIN_L3, \
+			PM_GPIO_STRENGTH_HIGH, \
+			PM_GPIO_FUNC_NORMAL, 0, 0)
+
 };
 
 /* Initial PM8921 MPP configurations */
@@ -248,8 +254,8 @@ static struct pm8xxx_keypad_platform_data keypad_data_liquid = {
 
 
 static const unsigned int keymap[] = {
-	KEY(0, 0, KEY_VOLUMEDOWN),
 	KEY(0, 1, KEY_VOLUMEUP),
+	KEY(0, 0, KEY_VOLUMEDOWN),
 	KEY(0, 2, KEY_CAMERA_SNAPSHOT),
 	KEY(0, 3, KEY_CAMERA_FOCUS),
 };
@@ -621,6 +627,8 @@ void __init msm8960_init_pmic(void)
 		pm8921_platform_data.bms_pdata->battery_type = BATT_DESAY;
 	} else if (machine_is_msm8960_mtp()) {
 		pm8921_platform_data.bms_pdata->battery_type = BATT_PALLADIUM;
+	} else if (machine_is_apq8060a_dragon()) {
+		pm8921_platform_data.bms_pdata->battery_type = BATT_ICR18650;
 	}
 
 	if (machine_is_msm8960_fluid())

@@ -708,6 +708,13 @@ static int smsc95xx_phy_initialize(struct usbnet *dev)
 		PHY_INT_MASK_DEFAULT_);
 	mii_nway_restart(&dev->mii);
 
+	/* Update initial carrier status */
+	if (smsc95xx_mdio_read(dev->net, dev->mii.phy_id, PHY_INT_SRC) &
+			PHY_INT_SRC_LINK_DOWN_)
+		set_bit(__LINK_STATE_NOCARRIER, &dev->net->state);
+	else
+		clear_bit(__LINK_STATE_NOCARRIER, &dev->net->state);
+
 	netif_dbg(dev, ifup, dev->net, "phy initialised successfully\n");
 	return 0;
 }

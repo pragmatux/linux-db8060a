@@ -85,7 +85,7 @@ static int msm8960_headset_gpios_configured;
 static struct snd_soc_jack hs_jack;
 static struct snd_soc_jack button_jack;
 
-static bool hs_detect_use_gpio;
+static bool hs_detect_use_gpio = 1;
 module_param(hs_detect_use_gpio, bool, 0444);
 MODULE_PARM_DESC(hs_detect_use_gpio, "Use GPIO for headset detection");
 
@@ -924,7 +924,7 @@ static int msm8960_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	pr_debug("%s(), dev_name%s\n", __func__, dev_name(cpu_dai->dev));
 
-	if (machine_is_msm8960_liquid()) {
+	if (machine_is_msm8960_liquid() || machine_is_apq8060a_dragon()) {
 		top_spk_pamp_gpio = (PM8921_GPIO_PM_TO_SYS(19));
 		bottom_spk_pamp_gpio = (PM8921_GPIO_PM_TO_SYS(18));
 	}

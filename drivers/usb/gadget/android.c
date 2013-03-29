@@ -92,6 +92,8 @@ static const char longname[] = "Gadget Android";
 
 #define ANDROID_DEVICE_NODE_NAME_LENGTH 11
 
+#define AVAILABLE_LUNS 8
+
 struct android_usb_function {
 	char *name;
 	void *config;
@@ -1171,14 +1173,17 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	struct mass_storage_function_config *config;
 	struct fsg_common *common;
 	int err;
+	int i;
+	char lunX[5];
 
 	config = kzalloc(sizeof(struct mass_storage_function_config),
 								GFP_KERNEL);
 	if (!config)
 		return -ENOMEM;
 
-	config->fsg.nluns = 1;
-	config->fsg.luns[0].removable = 1;
+	config->fsg.nluns = AVAILABLE_LUNS;
+	for (i = 0; i < config->fsg.nluns; i++)
+		config->fsg.luns[i].removable = 1;
 
 	common = fsg_common_init(NULL, cdev, &config->fsg);
 	if (IS_ERR(common)) {
@@ -1186,9 +1191,15 @@ static int mass_storage_function_init(struct android_usb_function *f,
 		return PTR_ERR(common);
 	}
 
-	err = sysfs_create_link(&f->dev->kobj,
-				&common->luns[0].dev.kobj,
-				"lun");
+	for (i = 0; i < config->fsg.nluns; i++) {
+		snprintf(lunX, 5, "lun%d", i);
+		err = sysfs_create_link(&f->dev->kobj,
+				&common->luns[i].dev.kobj,
+				lunX);
+		if (err)
+			break;
+	}
+
 	if (err) {
 		fsg_common_release(&common->ref);
 		kfree(config);
@@ -1893,16 +1904,17 @@ android_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *c)
 	req->length = 0;
 	gadget->ep0->driver_data = cdev;
 
-	list_for_each_entry(conf, &dev->configs, list_item)
-		if (&conf->usb_config == cdev->config)
-			list_for_each_entry(f,
-					    &conf->enabled_functions,
-					    enabled_list)
-				if (f->ctrlrequest) {
-					value = f->ctrlrequest(f, cdev, c);
-					if (value >= 0)
-						break;
-				}
+	list_for_each_entry(conf, &dev->configs, list_item) {
+		list_for_each_entry(f,
+				    &conf->enabled_functions,
+				    enabled_list) {
+			if (f->ctrlrequest) {
+				value = f->ctrlrequest(f, cdev, c);
+				if (value >= 0)
+					break;
+			}
+		}
+	}
 
 	/* Special case the accessory function.
 	 * It needs to handle control requests before it is enabled.

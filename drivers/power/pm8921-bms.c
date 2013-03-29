@@ -2779,6 +2779,8 @@ static int set_battery_data(struct pm8921_bms_chip *chip)
 		goto desay;
 	else if (chip->batt_type == BATT_PALLADIUM)
 		goto palladium;
+	else if (chip->batt_type == BATT_ICR18650)
+		goto dragonboard;
 
 	battery_id = read_battery_id(chip);
 	if (battery_id < 0) {
@@ -2816,6 +2818,17 @@ desay:
 		chip->rbatt_sf_lut = desay_5200_data.rbatt_sf_lut;
 		chip->default_rbatt_mohm = desay_5200_data.default_rbatt_mohm;
 		chip->delta_rbatt_mohm = desay_5200_data.delta_rbatt_mohm;
+		return 0;
+dragonboard:
+		pr_info("Using Dragonboard ICR18650 Battery Data\n");
+		chip->fcc = dragonBoard_ICR18650_data.fcc;
+		chip->fcc_temp_lut = dragonBoard_ICR18650_data.fcc_temp_lut;
+		chip->pc_temp_ocv_lut =
+			dragonBoard_ICR18650_data.pc_temp_ocv_lut;
+		chip->pc_sf_lut = dragonBoard_ICR18650_data.pc_sf_lut;
+		chip->rbatt_sf_lut = dragonBoard_ICR18650_data.rbatt_sf_lut;
+		chip->default_rbatt_mohm =
+			dragonBoard_ICR18650_data.default_rbatt_mohm;
 		return 0;
 }
 

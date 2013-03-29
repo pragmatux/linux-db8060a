@@ -6,9 +6,17 @@
 #include "mipi_dsi.h"
 #include "mipi_wintek.h"
 #include "mdp4.h"
+#include <linux/pwm.h>
+#include <linux/mfd/pm8xxx/pm8921.h>
 
-#define BACKLIGHT_MAX   255
-#define BACKLIGHT_GPIO  (24 - 1 + NR_GPIO_IRQS)
+
+#define MIPI_WINTEK_PWM_FREQ_HZ 300
+#define MIPI_WINTEK_PWM_PERIOD_USEC (USEC_PER_SEC / MIPI_WINTEK_PWM_FREQ_HZ)
+#define MIPI_WINTEK_PWM_DUTY_LEVEL \
+			(MIPI_WINTEK_PWM_PERIOD_USEC / \
+			WINTEK_VIDEO_WVGA_BL_LEVELS)
+
+static struct pwm_device *backlight_lpm;
 
 static struct dsi_buf wintek_tx_buf;
 static struct dsi_buf wintek_rx_buf;
@@ -23,7 +31,6 @@ static char display_off[2] = {0x28, 0x00};
 static char display_on[2]  = {0x29, 0x00};
 static char mem_write[2]   = {0x2c, 0x00};
 
-
 /* DTYPE_DCS_WRITE1 */
 static char rgb_888[2]		= {0x3A, 0x77};
 static char set_num_of_lanes[2] = {0xae, 0x03};
@@ -32,10 +39,6 @@ static char display_inv[2]	= {0xb4, 0x00};
 static char tearing_on[2]	= {0x35, 0x00};
 static char pwr_seq[2]		= {0xfa, 0x04};
 static char dither[2]		= {0xea, 0x00};
-#if CONFIG_FB_MSM_MIPI_WINTEK_VIDEO_WVGA_BL_LEVELS > 1
-static char brightness_val[2]   = {0x51, 0xf0};
-static char brightness_ctl[2]   = {0x53, 0x24};
-#endif
 
 /* DTYPE_DCS_LWRITE */
 static char power_ctrl1[4]	= {0xc1, 0x15, 0x56, 0x16};
@@ -74,10 +77,6 @@ static struct dsi_cmd_desc wintek_video_on_cmds[] = {
 {DTYPE_DCS_LWRITE, 1, 0, 0, 10,  sizeof(vert_scrl_start),  vert_scrl_start},
 {DTYPE_DCS_WRITE,  1, 0, 0, 120, sizeof(exit_sleep),	   exit_sleep},
 {DTYPE_DCS_WRITE,  1, 0, 0, 10,  sizeof(display_on),	   display_on},
-#if CONFIG_FB_MSM_MIPI_WINTEK_VIDEO_WVGA_BL_LEVELS > 1
-{DTYPE_DCS_WRITE1,  1, 0, 0, 10, sizeof(brightness_ctl),   brightness_ctl},
-{DTYPE_DCS_WRITE1,  1, 0, 0, 10, sizeof(brightness_val),   brightness_val},
-#endif
 {DTYPE_DCS_WRITE,  1, 0, 0, 10,  sizeof(mem_write),	   mem_write},
 
 };
@@ -88,21 +87,29 @@ static struct dsi_cmd_desc wintek_display_off_cmds[] = {
 	{DTYPE_DCS_WRITE, 1, 0, 0, 120,  sizeof(enter_sleep), enter_sleep}
 };
 
-
-uint32 mipi_wintek_set_brightness(struct msm_fb_data_type *mfd,
-	unsigned char level)
+static void mipi_wintek_set_backlight(struct msm_fb_data_type *mfd)
 {
-	char brightness[2] = {0x51, level};
+	int ret;
 
-	struct dsi_cmd_desc wintek_set_brightness_cmds[] = {
-	{DTYPE_DCS_WRITE1, 1, 0, 0, 0x11,  sizeof(brightness), brightness},
-	};
+	if (backlight_lpm) {
+		ret = pwm_config(backlight_lpm, MIPI_WINTEK_PWM_DUTY_LEVEL *
+			mfd->bl_level, MIPI_WINTEK_PWM_PERIOD_USEC);
 
-	mipi_dsi_cmds_tx(mfd, &wintek_tx_buf, wintek_set_brightness_cmds,
-	ARRAY_SIZE(wintek_set_brightness_cmds));
-	return 0;
+		if (ret) {
+			pr_err("pwm_config failed %d\n", ret);
+			return;
+		}
+		if (mfd->bl_level) {
+			ret = pwm_enable(backlight_lpm);
+			if (ret)
+				pr_err("pwm enable/disable on lpm failed"
+					"for bl %d\n",	mfd->bl_level);
+		} else {
+			pwm_disable(backlight_lpm);
+		}
+	}
+	return;
 }
-
 
 static int mipi_wintek_lcd_on(struct platform_device *pdev)
 {
@@ -120,6 +127,8 @@ static int mipi_wintek_lcd_on(struct platform_device *pdev)
 
 	mipi_dsi_cmds_tx(mfd, &wintek_tx_buf, wintek_video_on_cmds,
 					 ARRAY_SIZE(wintek_video_on_cmds));
+	mfd->bl_level = WINTEK_VIDEO_WVGA_BL_LEVELS;
+	mipi_wintek_set_backlight(mfd);
 
 	return 0;
 }
@@ -141,30 +150,8 @@ static int mipi_wintek_lcd_off(struct platform_device *pdev)
 
 
 
-static void mipi_wintek_set_backlight(struct msm_fb_data_type *mfd)
-{
-	struct mipi_panel_info *mipi;
-	int lcd_level;
 
-	mipi  = &mfd->panel_info.mipi;
 
-	if (CONFIG_FB_MSM_MIPI_WINTEK_VIDEO_WVGA_BL_LEVELS == 1) {
-		if (mfd->bl_level > 0)
-			gpio_set_value_cansleep(BACKLIGHT_GPIO, 1);
-		else
-			gpio_set_value_cansleep(BACKLIGHT_GPIO, 0);
-	} else {
-	lcd_level = (BACKLIGHT_MAX / mfd->panel_info.bl_max) * mfd->bl_level;
-
-		mutex_lock(&mfd->dma->ov_mutex);
-		mdp4_dsi_cmd_dma_busy_wait(mfd);
-		mdp4_dsi_blt_dmap_busy_wait(mfd);
-		mipi_dsi_mdp_busy_wait(mfd);
-		mipi_wintek_set_brightness(mfd, lcd_level);
-		mutex_unlock(&mfd->dma->ov_mutex);
-	}
-	return;
-}
 
 
 static int __devinit mipi_wintek_lcd_probe(struct platform_device *pdev)
@@ -186,6 +173,13 @@ static int __devinit mipi_wintek_lcd_probe(struct platform_device *pdev)
 
 		if (phy_settings != NULL)
 			mipi->dsi_phy_db = phy_settings;
+
+		backlight_lpm = pwm_request(0, "backlight");
+
+		if (backlight_lpm == NULL || IS_ERR(backlight_lpm)) {
+			pr_err("%s pwm_request() failed\n", __func__);
+			backlight_lpm = NULL;
+		}
 	}
 	return 0;
 }

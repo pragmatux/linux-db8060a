@@ -93,7 +93,7 @@ Revision 1-0-7 26/11/2010
 /* 	Magnetometer section defines	 	*/
 /************************************************/
 
-#define LSM303DHLC_MAG_DEV_NAME "lsm303dlhc_m"
+#define	LSM303DLHC_MAG_DEV_NAME		"lsm303dlhc_mag"
 #define LSM303DLHC_MAG_I2C_SAD		0x1E
 
 /* Magnetometer Sensor Full Scale */
@@ -165,6 +165,7 @@ struct lsm303dlhc_acc_platform_data {
 	int gpio_int1;
 	int gpio_int2;
 };
+
 
 struct lsm303dlhc_mag_platform_data {
 

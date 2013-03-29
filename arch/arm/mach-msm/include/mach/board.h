@@ -122,14 +122,17 @@ struct msm_camera_sensor_flash_current_driver {
 };
 
 enum msm_camera_ext_led_flash_id {
-	MAM_CAMERA_EXT_LED_FLASH_SC628A,
-	MAM_CAMERA_EXT_LED_FLASH_TPS61310,
+	MSM_CAMERA_EXT_LED_FLASH_SC628A = 0,
+	MSM_CAMERA_EXT_LED_FLASH_TPS61310,
+	MSM_CAMERA_EXT_LED_FLASH_ADP1650,
+	MSM_CAMERA_EXT_LED_FLASH_MAX	/* Used in Array definition */
 };
 
 struct msm_camera_sensor_flash_external {
 	uint32_t led_en;
 	uint32_t led_flash_en;
 	enum msm_camera_ext_led_flash_id flash_id;
+	struct i2c_client *i2c_client;
 	struct msm_cam_expander_info *expander_info;
 };
 

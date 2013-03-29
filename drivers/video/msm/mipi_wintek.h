@@ -14,6 +14,8 @@
 #ifndef MIPI_WINTEK_H
 #define MIPI_WINTEK_H
 
+#define WINTEK_VIDEO_WVGA_BL_LEVELS 255
+
 int mipi_wintek_device_register(struct msm_panel_info *pinfo,
 					u32 channel, u32 panel);
 

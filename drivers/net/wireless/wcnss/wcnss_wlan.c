@@ -536,3 +536,4 @@ module_exit(wcnss_wlan_exit);
 MODULE_LICENSE("GPL v2");
 MODULE_VERSION(VERSION);
 MODULE_DESCRIPTION(DEVICE "Driver");
+MODULE_ALIAS("platform:wcnss_wlan");

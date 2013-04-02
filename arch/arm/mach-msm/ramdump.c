@@ -220,6 +220,7 @@ void *create_ramdump_device(const char *dev_name)
 
 	return (void *)rd_dev;
 }
+EXPORT_SYMBOL(create_ramdump_device);
 
 int do_ramdump(void *handle, struct ramdump_segment *segments,
 		int nsegments)
@@ -260,3 +261,4 @@ int do_ramdump(void *handle, struct ramdump_segment *segments,
 	rd_dev->data_ready = 0;
 	return ret;
 }
+EXPORT_SYMBOL(do_ramdump);

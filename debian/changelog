@@ -1,3 +1,16 @@
+linux-db8060a (3.0.21-12374-gcae2925-5) unstable; urgency=low
+
+  * Merge in Intrinsyc BSP v1.3
+  * Packaging: modernize Standards-Version
+  * Configure out RFKILL
+  * Configure WCNSS as module
+  * wcnss_wlan: add module alias
+  * msm8960-perf_defconfig: disable LOCALVERSION_AUTO
+  * Boot from 'userdata' instead of 'system'
+  * Fix compatibility with debhelper's use of depmod
+
+ -- Ryan Kuester <rkuester@insymbols.com>  Fri, 04 Apr 2013 14:35:30 -0500
+
 linux-db8060a (3.0.21-12374-gcae2925-4) unstable; urgency=low
 
   [ Bill Gatliff ]

@@ -31,6 +31,7 @@ override_dh_auto_install:
 	cp arch/arm/boot/boot.img $(DESTDIR)/boot
 	$(MAKE) $(KARGS) INSTALL_MOD_PATH=$(DESTDIR) modules_install
 	rm -f $(DESTDIR)/lib/modules/*/build $(DESTDIR)/lib/modules/*/source
+	cp System.map $(DESTDIR)/boot/System.map-$(shell cat include/config/kernel.release)
 
 override_dh_auto_configure:
 override_dh_auto_test:

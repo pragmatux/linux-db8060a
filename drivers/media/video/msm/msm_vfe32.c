@@ -3951,12 +3951,17 @@ static long msm_vfe_subdev_ioctl(struct v4l2_subdev *sd,
 		(struct msm_camvfe_params *)arg;
 	struct msm_vfe_cfg_cmd *cmd = vfe_params->vfe_cfg;
 	void *data = vfe_params->data;
-
 	long rc = 0;
 	uint32_t i = 0;
 	struct vfe_cmd_stats_buf *scfg = NULL;
 	struct msm_pmem_region   *regptr = NULL;
 	struct vfe_cmd_stats_ack *sack = NULL;
+
+	if (subdev_cmd == VIDIOC_QUERYCAP) {
+		pr_err("%s: command not found\n", __func__);
+		return -ENOIOCTLCMD;
+	}
+
 	if (cmd->cmd_type == CMD_VFE_PROCESS_IRQ) {
 		vfe32_process_irq((uint32_t) data);
 		return rc;

@@ -1,3 +1,11 @@
+linux-db8060a (3.0.21-12374-gcae2925-6) unstable; urgency=low
+
+  * msm_vfe32: avoid OOPS when queried for capabilities
+  * Configure in POSIX message queues
+  * Configure out CONFIG_ANDROID_PARANOID_NETWORK
+
+ -- Ryan Kuester <rkuester@insymbols.com>  Wed, 05 Jun 2013 16:09:16 +0000
+
 linux-db8060a (3.0.21-12374-gcae2925-5) unstable; urgency=low
 
   * Merge in Intrinsyc BSP v1.3
